@@ -18,7 +18,6 @@ class CellLineEdit(QLineEdit):
         self.setReadOnly(True)
         #self.setAttribute(Qt.WA_MacShowFocusRect, False)    # trying to get rid of focus rect
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setMaxLength(1)         # only one digit
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -27,12 +26,6 @@ class CellLineEdit(QLineEdit):
 
 
         self.resetStyleSheet()
-
-    def sizeHint(self):
-        size = super().sizeHint()  # Use base size
-        #size.setHeight(size.width())       # doesn't work
-        side = min(size.width(), size.height())
-        return QSize(side, side)
     
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -40,11 +33,6 @@ class CellLineEdit(QLineEdit):
         new_size = max(10, int(event.size().height() * 0.7))
         font.setPointSize(new_size)
         self.setFont(font)
-
-#    def keyPressEvent(self, event):
-#        if event.key() == Qt.Key.Key_Escape:
-#            print(f"{self.__repr__}: escape key pressed")
-#        super().keyPressEvent(event)
 
     # for some reason on mac, the focus rectangle for qlineedit's with active
     # edit mode have a blue highlight rectangle that can't be gotten rid of

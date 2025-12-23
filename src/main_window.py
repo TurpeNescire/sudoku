@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QMainWindow
+from PySide6.QtWidgets import QMainWindow, QSizePolicy, QHBoxLayout, QVBoxLayout, QWidget, QLayout
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QAction 
 
@@ -48,3 +48,5 @@ class MainWindow(QMainWindow):
 
     def solve_mode(self):
         print("solve mode")
+
+

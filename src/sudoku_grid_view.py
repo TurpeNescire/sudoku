@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QFrame, QGridLayout, QStackedWidget, QWidgetItem, QHBoxLayout, QVBoxLayout
-from PySide6.QtCore import Qt, QEvent
+from PySide6.QtWidgets import QFrame, QGridLayout, QStackedWidget, QWidgetItem, QHBoxLayout, QVBoxLayout, QSizePolicy, QLayout, QWidget
+from PySide6.QtCore import Qt, QEvent, QRect, QObject
 
 from sudoku_cell import Cell
 from sudoku_cell_line_edit import CellLineEdit
@@ -14,33 +14,28 @@ class SudokuGridView(QFrame):
 
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus) 
 
-        outerLayout = QHBoxLayout()
-        #outerVLayout = QVBoxLayout() 
-        innerLayout = QGridLayout()
+        layout = QGridLayout()
+        layout.setSpacing(0)
         for row in range(9):
             for col in range(9):
                 cell = Cell(self, row, col)
                 cell.installEventFilter(self)
-                innerLayout.addWidget(cell, row, col)
+                layout.addWidget(cell, row, col)
 
-        #layout.setContentsMargins(0, 0, 0, 0)
-        innerLayout.setSpacing(0)
-        innerLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        #outerVLayout.addStretch(1)
-        #outerVLayout.addLayout(innerLayout)
-        #outerVLayout.addStretch(1)
-        outerLayout.addStretch(1)
-        outerLayout.addLayout(innerLayout)
-        #outerLayout.addLayout(outerVLayout)
-        outerLayout.addStretch(1)
-        #self.setLayout(innerLayout)
-        self.setLayout(outerLayout)
+        self.setLayout(layout)
 
 
     def keyPressEvent(self, event):
         if self.handleKeyPress(event.key()) is False:
             super().keyPressEvent(event)
 
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        side = min(self.width(), self.height())
+        self.resize(side, side)
+        parent = self.parent()
+        assert isinstance(parent, QWidget)
+        self.move(parent.rect().center() - self.rect().center())
 
     def handleKeyPress(self, key):
         # move the current focus highlight to the next cell
@@ -141,28 +136,22 @@ class SudokuGridView(QFrame):
        
         return False
 
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        side = min(self.width(), self.height())
-        self.resize(side, side)
-
-
     def edit_mode(self):
         # toggle read only mode on cells inside the central layout
         self.in_edit_mode = False if self.in_edit_mode else True
 
-        for i in range(self.layout().count()):
-            item = self.layout().itemAt(i)
+        layout = self.layout()
+        assert isinstance(layout, QGridLayout)
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
             if item is not None:
                 widget = item.widget()
                 if isinstance(widget, CellLineEdit):
                     widget.setReadOnly(self.in_edit_mode)
 
     def eventFilter(self, obj, event):
-        # intercept escape key presses from interior cell widget
-        if event.type() == QEvent.KeyPress and isinstance(obj, CellLineEdit):
-            #print(f"{self.__repr__}.eventFilter KeyPress on {obj}")
+        # intercept key presses from interior cell widgets
+        if event.type() == QEvent.Type.KeyPress and isinstance(obj, CellLineEdit):
             return self.handleKeyPress(event.key()) 
 
         return super().eventFilter(obj, event)
