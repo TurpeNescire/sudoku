@@ -1,12 +1,12 @@
-from PySide6.QtWidgets import QFrame, QGridLayout, QVBoxLayout, QSizePolicy
+from PySide6.QtWidgets import QFrame, QGridLayout, QStackedWidget, QWidgetItem, QHBoxLayout, QVBoxLayout
 from PySide6.QtCore import Qt, QEvent
 
+from sudoku_cell import Cell
 from sudoku_cell_line_edit import CellLineEdit
 from sudoku_settings import *
 
 
 class SudokuGridView(QFrame):
-    gridLayout = QGridLayout()
     in_edit_mode = True
 
     def __init__(self):
@@ -14,25 +14,27 @@ class SudokuGridView(QFrame):
 
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus) 
 
+        outerLayout = QHBoxLayout()
+        #outerVLayout = QVBoxLayout() 
+        innerLayout = QGridLayout()
         for row in range(9):
             for col in range(9):
-                cell = CellLineEdit(row, col)
+                cell = Cell(self, row, col)
                 cell.installEventFilter(self)
-                cell.setReadOnly(True)
-        #self.setAttribute(Qt.WA_MacShowFocusRect, False)    # trying to get rid of focus rect
-                cell.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-                cell.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-                cell.setMaxLength(1)         # only one digit
-                cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                innerLayout.addWidget(cell, row, col)
 
-                #layout = QVBoxLayout()
-                #self.setLayout(layout)
-                self.gridLayout.addWidget(cell, row, col)
-
-        self.gridLayout.setContentsMargins(0, 0, 0, 0)
-        self.gridLayout.setSpacing(0)
-        self.gridLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setLayout(self.gridLayout)
+        #layout.setContentsMargins(0, 0, 0, 0)
+        innerLayout.setSpacing(0)
+        innerLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        #outerVLayout.addStretch(1)
+        #outerVLayout.addLayout(innerLayout)
+        #outerVLayout.addStretch(1)
+        outerLayout.addStretch(1)
+        outerLayout.addLayout(innerLayout)
+        #outerLayout.addLayout(outerVLayout)
+        outerLayout.addStretch(1)
+        #self.setLayout(innerLayout)
+        self.setLayout(outerLayout)
 
 
     def keyPressEvent(self, event):
@@ -41,66 +43,92 @@ class SudokuGridView(QFrame):
 
 
     def handleKeyPress(self, key):
+        # move the current focus highlight to the next cell
         if (
-            key == Qt.Key.Key_Return or
-            key == Qt.Key.Key_Up or
-            key == Qt.Key.Key_Down or
-            key == Qt.Key.Key_Left or
+            key == Qt.Key.Key_Return or key == Qt.Key.Key_Up or
+            key == Qt.Key.Key_Down or key == Qt.Key.Key_Left or
             key == Qt.Key.Key_Right
         ):
-            # move the current focus highlight down and wrap to the next column on return
             currentFocus = self.focusWidget()
-            if currentFocus:
-                layout = self.layout()
-                assert layout is not None
-                index = layout.indexOf(currentFocus)
-                if isinstance(layout, QGridLayout) and index != -1:
-                    pos = layout.getItemPosition(index)
-                    if pos is not None: 
-                        row, col, _rowSpan, _colSpan = pos # type: ignore
-                                # known limitation in PySide6 type stubs
-                                # getItemPosition() always returns a 4-tuple at runtime
-                        if key == Qt.Key.Key_Return or key == Qt.Key.Key_Down:
-                            if row == 8:
-                                if col == 8:
-                                    col = 0
-                                else:
-                                    col += 1
-                                row = 0
-                            else:
-                                row += 1
-                        elif key == Qt.Key.Key_Up:
-                            if row == 0:
-                                if col == 0:
-                                    col = 8
-                                else:
-                                    col -= 1
-                                row = 8
-                            else:
-                                row -= 1
-                        elif key == Qt.Key.Key_Left:
-                            if col == 0:
-                                if row == 0:
-                                    row = 8
-                                else:
-                                    row -= 1
-                                col = 8
-                            else:
-                                col -= 1
-                        elif key == Qt.Key.Key_Right:
-                            if col == 8:
-                                if row == 8:
-                                    row = 0
-                                else:
-                                    row += 1
-                                col = 0
-                            else:
-                                col += 1
-                        nextFocus = layout.itemAtPosition(row, col)
-                        widget = nextFocus.widget() if nextFocus else None
-                        if widget is not None:
-                            widget.setFocus()
-                            return True
+
+            # runs at startup to set the current focus to the CellLineEdit
+            # at position (0,0) in the grid layout
+            if isinstance(currentFocus, SudokuGridView):
+                currentFocusLayout = currentFocus.layout()
+                assert isinstance(currentFocusLayout, QGridLayout)
+                currentFocusItem = currentFocusLayout.itemAtPosition(0,0)
+                assert isinstance(currentFocusItem, QWidgetItem)
+                currentFocus = currentFocusItem.widget()
+                assert isinstance(currentFocus, Cell)
+                currentFocus = currentFocus.findChild(QStackedWidget)
+                assert isinstance(currentFocus, QStackedWidget)
+                currentFocus = currentFocus.widget(0)
+                assert isinstance(currentFocus, CellLineEdit)
+                currentFocus.setFocus()
+                return True
+
+            # hierarchy is Cell->QStackedWidget->CellLineEdit, need to get the
+            # current focus CellLineEdit's parent Cell so we can find the next
+            # Cell in the 9x9 grid
+            assert isinstance(currentFocus, CellLineEdit)
+            currentFocus = currentFocus.parent().parent()
+            assert isinstance(currentFocus, Cell)
+
+            # TODO: fix after installing QGridLayout in containing layout
+            layout = self.layout()
+            assert isinstance(layout, QGridLayout)
+            index = layout.indexOf(currentFocus)
+            assert index != -1
+
+            pos = layout.getItemPosition(index)
+            assert pos is not None
+            row, col, _rowSpan, _colSpan = pos # type: ignore
+                    # known limitation in PySide6 type stubs
+                    # getItemPosition() always returns a 4-tuple at runtime
+            
+            # after getting the current row/col, handle finding the next
+            # cells row/col, wrapping the row or column 
+            if SCROLL_MODE == "no v wrap":    # don't wrap at the vertical limits
+                index = row * 9 + col
+                if key == Qt.Key.Key_Return or key == Qt.Key.Key_Down:
+                    index = (index + 9) % 81
+                elif key == Qt.Key.Key_Up:
+                    index = (index - 9) % 81
+                elif key == Qt.Key.Key_Left:
+                    index = (index - 1) % 81
+                elif key == Qt.Key.Key_Right:
+                    index = (index + 1) % 81
+                row, col = divmod(index, 9)
+            elif SCROLL_MODE == "v wrap":      # wrap at the vertical limits
+                if key == Qt.Key.Key_Return or key == Qt.Key.Key_Down:
+                    row, col = (row + 1) % 9, col
+                    if row == 0:
+                        col = (col + 1) % 9
+                elif key == Qt.Key.Key_Up:
+                    row, col = (row - 1) % 9, col
+                    if row == 8:
+                        col = (col - 1) % 9
+                elif key == Qt.Key.Key_Left:
+                    col, row = (col - 1) % 9, row
+                    if col == 8:
+                        row = (row - 1) % 9
+                elif key == Qt.Key.Key_Right:
+                    col, row = (col + 1) % 9, row
+                    if col == 0:
+                        row = (row + 1) % 9
+
+            # get the widget of the next focus item using new row/col values
+            nextFocusLayoutItem = layout.itemAtPosition(row, col)
+            nextFocusCell = nextFocusLayoutItem.widget() if nextFocusLayoutItem else None
+            assert isinstance(nextFocusCell, Cell)
+            nextFocusStackedWidget = nextFocusCell.findChild(QStackedWidget)
+            assert isinstance(nextFocusStackedWidget, QStackedWidget)
+            nextFocusWidget = nextFocusStackedWidget.widget(0)
+            assert isinstance(nextFocusWidget, CellLineEdit)
+
+            nextFocusWidget.setFocus()
+
+            return True
         elif key == Qt.Key.Key_Tab:         # either Qt or MacOS seems to coopt Key_Tab events, this never runs
             return False
         elif key == Qt.Key.Key_Space:
@@ -124,8 +152,8 @@ class SudokuGridView(QFrame):
         # toggle read only mode on cells inside the central layout
         self.in_edit_mode = False if self.in_edit_mode else True
 
-        for i in range(self.gridLayout.count()):
-            item = self.gridLayout.itemAt(i)
+        for i in range(self.layout().count()):
+            item = self.layout().itemAt(i)
             if item is not None:
                 widget = item.widget()
                 if isinstance(widget, CellLineEdit):
@@ -134,9 +162,7 @@ class SudokuGridView(QFrame):
     def eventFilter(self, obj, event):
         # intercept escape key presses from interior cell widget
         if event.type() == QEvent.KeyPress and isinstance(obj, CellLineEdit):
-            if event.key() == Qt.Key.Key_Tab:
-                super().eventFilter(obj, event)
-
+            #print(f"{self.__repr__}.eventFilter KeyPress on {obj}")
             return self.handleKeyPress(event.key()) 
 
         return super().eventFilter(obj, event)

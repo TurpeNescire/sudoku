@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QWidget, QLineEdit, QGridLayout, QSizePolicy
-from PySide6.QtCore import Qt, QSize 
+from PySide6.QtWidgets import QWidget, QLineEdit, QGridLayout, QSizePolicy, QVBoxLayout 
+from PySide6.QtCore import Qt, QSize, QEvent
 
 from sudoku_settings import *
 
@@ -7,10 +7,13 @@ from sudoku_settings import *
 class CellLineEdit(QLineEdit):
     row: int
     col: int
-    layout: QGridLayout
+    myLayout: QVBoxLayout
 
-    def __init__(self, row: int, col: int):
-        super().__init__()
+    def __init__(self, parent, row: int, col: int):
+        super().__init__(parent)
+
+        self.row = row
+        self.col = col
 
         self.setReadOnly(True)
         #self.setAttribute(Qt.WA_MacShowFocusRect, False)    # trying to get rid of focus rect
@@ -19,17 +22,10 @@ class CellLineEdit(QLineEdit):
         self.setMaxLength(1)         # only one digit
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        #self.layout = QGridLayout()
-        #for rowT in range(9):
-        #    for colT in range(9):
-                #hintLineEdit = QLineEdit(self)
-        #        pass
-        #selfLayout.setContentsMargins(0, 0, 0, 0)      # already defaults to 0 margins?
-        #self.setLayout(self.layout)
+        self.myLayout = QVBoxLayout()
+        self.setLayout(self.myLayout)
 
 
-        self.row = row
-        self.col = col
         self.resetStyleSheet()
 
     def sizeHint(self):
@@ -45,10 +41,10 @@ class CellLineEdit(QLineEdit):
         font.setPointSize(new_size)
         self.setFont(font)
 
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key.Key_Escape:
-            print(f"{self.__repr__}: escape key pressed")
-        super().keyPressEvent(event)
+#    def keyPressEvent(self, event):
+#        if event.key() == Qt.Key.Key_Escape:
+#            print(f"{self.__repr__}: escape key pressed")
+#        super().keyPressEvent(event)
 
     # for some reason on mac, the focus rectangle for qlineedit's with active
     # edit mode have a blue highlight rectangle that can't be gotten rid of
@@ -74,8 +70,6 @@ class CellLineEdit(QLineEdit):
             side_border_width += f"\t\tborder-left-width: {CELL_BORDER_SIDE_WIDTH}px;\n"
 
         side_border_width = side_border_width[:-1]
-        #print(f"r{self.row}c{self.col}")
-        #print(side_border_width)
 
         self.setStyleSheet(f"""
             QLineEdit {{
@@ -103,10 +97,6 @@ class CellLineEdit(QLineEdit):
             }}
         """)
 
-        if self.row == 2 and self.col == 2:
-            print(self.property("styleSheet"))
+        #if self.row == 2 and self.col == 2:
+        #    print(self.property("styleSheet"))
 
-
-        #                 font-size 40px;
-
-    
