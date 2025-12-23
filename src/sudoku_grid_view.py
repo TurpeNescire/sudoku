@@ -24,6 +24,14 @@ class SudokuGridView(QFrame):
 
         self.setLayout(layout)
 
+    def eventFilter(self, obj, event):
+        # intercept key press events from interior cell widgets
+        # after calling cell.installEventFilter(self) in the constructor
+        # we need to do this becasue QLineEdit was eating arrow keys and escape, etc.
+        if event.type() == QEvent.Type.KeyPress and isinstance(obj, CellLineEdit):
+            return self.handleKeyPress(event.key()) 
+
+        return super().eventFilter(obj, event)
 
     def keyPressEvent(self, event):
         if self.handleKeyPress(event.key()) is False:
@@ -69,7 +77,6 @@ class SudokuGridView(QFrame):
             currentFocus = currentFocus.parent().parent()
             assert isinstance(currentFocus, Cell)
 
-            # TODO: fix after installing QGridLayout in containing layout
             layout = self.layout()
             assert isinstance(layout, QGridLayout)
             index = layout.indexOf(currentFocus)
@@ -144,18 +151,14 @@ class SudokuGridView(QFrame):
         assert isinstance(layout, QGridLayout)
         for i in range(layout.count()):
             item = layout.itemAt(i)
-            if item is not None:
-                widget = item.widget()
-                if isinstance(widget, CellLineEdit):
-                    widget.setReadOnly(self.in_edit_mode)
-
-    def eventFilter(self, obj, event):
-        # intercept key presses from interior cell widgets
-        if event.type() == QEvent.Type.KeyPress and isinstance(obj, CellLineEdit):
-            return self.handleKeyPress(event.key()) 
-
-        return super().eventFilter(obj, event)
-                        
+            assert isinstance(item, QWidgetItem)
+            cell = item.widget()
+            assert isinstance(cell, Cell)
+            cellStackedWidget = cell.findChild(QStackedWidget)
+            assert isinstance(cellStackedWidget, QStackedWidget)
+            cellLineEdit = cellStackedWidget.widget(0)
+            assert isinstance(cellLineEdit, CellLineEdit)
+            cellLineEdit.setReadOnly(self.in_edit_mode)                       
 
 
 '''

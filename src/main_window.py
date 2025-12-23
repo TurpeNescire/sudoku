@@ -27,8 +27,8 @@ class MainWindow(QMainWindow):
         self.edit_mode_triggered_signal.connect(self.central_widget.edit_mode)
         self.solve_mode_triggered_signal.connect(self.solve_mode)
 
+        # set up menus
         menuBar = self.menuBar()
-
         game_menu = menuBar.addMenu("Game")
         edit_mode_action = QAction("&Edit clues..", self)
         edit_mode_action.setShortcut("Ctrl+E")
@@ -41,6 +41,7 @@ class MainWindow(QMainWindow):
         solve_mode_action.triggered.connect(self.solve_mode)
         game_menu.addAction(solve_mode_action)
 
+        # qmainwindow has to register a central widget
         self.setCentralWidget(self.central_widget)
 
         self.show()
