@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt, QSize, QEvent
 from sudoku_settings import *
 
 
-class CellLineEdit(QLineEdit):
+class CellEdit(QLineEdit):
     row: int
     col: int
     myLayout: QVBoxLayout

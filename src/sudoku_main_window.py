@@ -2,8 +2,10 @@ from PySide6.QtWidgets import QMainWindow, QSizePolicy, QHBoxLayout, QVBoxLayout
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QAction 
 
-from sudoku_cell_line_edit import CellLineEdit
+from sudoku_cell_edit import CellEdit
+
 from sudoku_cell import Cell
+
 from sudoku_settings import (
         WINDOW_TITLE, MAIN_WINDOW_X, MAIN_WINDOW_Y,
         MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT
@@ -52,8 +54,6 @@ class SudokuMainWindow(QMainWindow):
         currentCell = self.get_current_cell()
         assert isinstance(currentCell, Cell)
         currentCell.cycle_mode()
-        print(currentCell.get_mode())
-        print("solve mode")
 
     def get_current_cell(self):
         focusWidget = self.central_widget.focusWidget()
@@ -64,6 +64,4 @@ class SudokuMainWindow(QMainWindow):
             focusWidget = focusWidget.parentWidget()
 
         return None
-
-
 

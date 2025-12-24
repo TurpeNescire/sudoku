@@ -4,7 +4,8 @@ from PySide6.QtWidgets import QWidget, QLineEdit, QGridLayout, QSizePolicy, QVBo
 from PySide6.QtCore import Qt, QSize, QEvent, QEnum, QObject
 
 from sudoku_settings import *
-from sudoku_cell_line_edit import CellLineEdit
+from sudoku_cell_edit import CellEdit
+from sudoku_hint_container import HintContainer
 
 
 class CellViewMode(Enum):
@@ -26,7 +27,7 @@ class Cell(QWidget):
     display_as_hint: int
     myLayout: QVBoxLayout
     stacked_widget: QStackedWidget
-    solution: CellLineEdit
+    solution: CellEdit
     solution_layout: QVBoxLayout
     hint_container: QWidget
     hint_layout: QGridLayout
@@ -44,24 +45,13 @@ class Cell(QWidget):
         self.stacked_widget.installEventFilter(parent)
 
         # solution is the line edit subclass that shows single digit answers
-        self.solution = CellLineEdit(self, row, col)
+        self.solution = CellEdit(self, row, col)
         self.solution.installEventFilter(parent)
 
         self.stacked_widget.addWidget(self.solution)
         
         # hint container contains 3x3 QLineEdits for displaying hints 
-        self.hint_container = QWidget(self)
-        self.hint_container.installEventFilter(parent)
-        self.hint_layout = QGridLayout()
-        self.hint_layout.setContentsMargins(0, 0, 0, 0)
-        for row_idx in range (3):
-            for col_idx in range(3):
-                digit = (row_idx + 1) * (col_idx + 1)
-                hint_edit = QLineEdit(str(digit))
-                hint_edit.setReadOnly(True)
-                self.hint_layout.addWidget(hint_edit, row_idx, col_idx)
-
-        self.hint_container.setLayout(self.hint_layout)
+        self.hint_container = HintContainer(self, self.row, self.col)
         self.stacked_widget.addWidget(self.hint_container)
 
         # set solution as the visible widget
@@ -100,7 +90,8 @@ class Cell(QWidget):
         if self.mode == CellViewMode.SOLUTION:
             self.show_hint_grid()
         elif self.mode == CellViewMode.HINT_GRID:
-            self.show_compact_hints()
-        elif self.mode == CellViewMode.HINT_COMPACT:
             self.show_solution()
+            #self.show_compact_hints()
+#        elif self.mode == CellViewMode.HINT_COMPACT:
+#            self.show_solution()
 

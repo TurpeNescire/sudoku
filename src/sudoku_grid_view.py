@@ -1,22 +1,23 @@
-import sys
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 from PySide6.QtWidgets import QFrame, QGridLayout, QStackedWidget, QWidgetItem, QHBoxLayout, QVBoxLayout, QSizePolicy, QLayout, QWidget
 from PySide6.QtCore import Qt, QEvent, QRect, QObject
 
+if TYPE_CHECKING:
+    from sudoku_main_window import SudokuMainWindow 
 from sudoku_cell import Cell
-from sudoku_cell_line_edit import CellLineEdit
+from sudoku_cell_edit import CellEdit
 from sudoku_settings import *
-
-if 'SudokuMainWindow' in sys.modules:
-    import SudokuMainWindow                         # type: ignore
+#from sudoku_hint import Hint
 
 
 class SudokuGridView(QFrame):
     in_edit_mode = True
-    mainWindow: SudokuMainWindow                    # type: ignore
+    mainWindow: SudokuMainWindow
 
-    def __init__(self, parent: SudokuMainWindow):   # type: ignore
-        super().__init__(parent)                    # type: ignore
+    def __init__(self, parent: SudokuMainWindow):
+        super().__init__(parent)
 
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus) 
         self.mainWindow = parent
@@ -35,7 +36,7 @@ class SudokuGridView(QFrame):
         # intercept key press events from interior cell widgets
         # after calling cell.installEventFilter(self) in the constructor
         # we need to do this becasue QLineEdit was eating arrow keys and escape, etc.
-        if event.type() == QEvent.Type.KeyPress and isinstance(obj, CellLineEdit):
+        if event.type() == QEvent.Type.KeyPress and isinstance(obj, CellEdit):
             return self.handleKeyPress(event.key()) 
 
         return super().eventFilter(obj, event)
@@ -73,24 +74,13 @@ class SudokuGridView(QFrame):
                 currentFocus = currentFocus.findChild(QStackedWidget)
                 assert isinstance(currentFocus, QStackedWidget)
                 currentFocus = currentFocus.widget(0)
-                assert isinstance(currentFocus, CellLineEdit)
+                assert isinstance(currentFocus, CellEdit)
                 currentFocus.setFocus()
                 return True
 
             currentFocus = self.mainWindow.get_current_cell()
             assert isinstance(currentFocus, Cell)
-
-#            layout = self.layout()
-#            assert isinstance(layout, QGridLayout)
-#            index = layout.indexOf(currentFocus)
-#            assert index != -1
-#
-#            pos = layout.getItemPosition(index)
-#            assert pos is not None
             row, col = currentFocus.row, currentFocus.col
-#            row, col, _rowSpan, _colSpan = pos # type: ignore
-                    # known limitation in PySide6 type stubs
-                    # getItemPosition() always returns a 4-tuple at runtime
             
             # after getting the current row/col, handle finding the next
             # cells row/col, wrapping the row or column 
@@ -132,7 +122,7 @@ class SudokuGridView(QFrame):
             nextFocusStackedWidget = nextFocusCell.findChild(QStackedWidget)
             assert isinstance(nextFocusStackedWidget, QStackedWidget)
             nextFocusWidget = nextFocusStackedWidget.widget(0)
-            assert isinstance(nextFocusWidget, CellLineEdit)
+            assert isinstance(nextFocusWidget, CellEdit)
 
             nextFocusWidget.setFocus()
 
@@ -162,7 +152,7 @@ class SudokuGridView(QFrame):
             assert isinstance(cell, Cell)
             cellStackedWidget = cell.findChild(QStackedWidget)
             assert isinstance(cellStackedWidget, QStackedWidget)
-            cellLineEdit = cellStackedWidget.widget(0)
-            assert isinstance(cellLineEdit, CellLineEdit)
-            cellLineEdit.setReadOnly(self.in_edit_mode)                       
+            cellEdit = cellStackedWidget.widget(0)
+            assert isinstance(cellEdit, CellEdit)
+            cellEdit.setReadOnly(self.in_edit_mode)                       
 
