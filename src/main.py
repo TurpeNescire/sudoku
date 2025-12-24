@@ -21,6 +21,6 @@ if __name__ == "__main__":
     #app = QApplication(sys.argv)
     app = QApplication([])
     app.setStyle(NoFocusRectStyle())
-    from main_window import MainWindow
-    window = MainWindow()
+    from sudoku_main_window import SudokuMainWindow
+    window = SudokuMainWindow()
     sys.exit(app.exec())

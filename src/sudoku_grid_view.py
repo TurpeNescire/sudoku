@@ -1,3 +1,5 @@
+import sys
+
 from PySide6.QtWidgets import QFrame, QGridLayout, QStackedWidget, QWidgetItem, QHBoxLayout, QVBoxLayout, QSizePolicy, QLayout, QWidget
 from PySide6.QtCore import Qt, QEvent, QRect, QObject
 
@@ -5,14 +7,19 @@ from sudoku_cell import Cell
 from sudoku_cell_line_edit import CellLineEdit
 from sudoku_settings import *
 
+if 'SudokuMainWindow' in sys.modules:
+    import SudokuMainWindow                         # type: ignore
+
 
 class SudokuGridView(QFrame):
     in_edit_mode = True
+    mainWindow: SudokuMainWindow                    # type: ignore
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent: SudokuMainWindow):   # type: ignore
+        super().__init__(parent)                    # type: ignore
 
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus) 
+        self.mainWindow = parent
 
         layout = QGridLayout()
         layout.setSpacing(0)
@@ -70,21 +77,18 @@ class SudokuGridView(QFrame):
                 currentFocus.setFocus()
                 return True
 
-            # hierarchy is Cell->QStackedWidget->CellLineEdit, need to get the
-            # current focus CellLineEdit's parent Cell so we can find the next
-            # Cell in the 9x9 grid
-            assert isinstance(currentFocus, CellLineEdit)
-            currentFocus = currentFocus.parent().parent()
+            currentFocus = self.mainWindow.get_current_cell()
             assert isinstance(currentFocus, Cell)
 
-            layout = self.layout()
-            assert isinstance(layout, QGridLayout)
-            index = layout.indexOf(currentFocus)
-            assert index != -1
-
-            pos = layout.getItemPosition(index)
-            assert pos is not None
-            row, col, _rowSpan, _colSpan = pos # type: ignore
+#            layout = self.layout()
+#            assert isinstance(layout, QGridLayout)
+#            index = layout.indexOf(currentFocus)
+#            assert index != -1
+#
+#            pos = layout.getItemPosition(index)
+#            assert pos is not None
+            row, col = currentFocus.row, currentFocus.col
+#            row, col, _rowSpan, _colSpan = pos # type: ignore
                     # known limitation in PySide6 type stubs
                     # getItemPosition() always returns a 4-tuple at runtime
             
@@ -120,6 +124,8 @@ class SudokuGridView(QFrame):
                         row = (row + 1) % 9
 
             # get the widget of the next focus item using new row/col values
+            layout = self.layout()
+            assert isinstance(layout, QGridLayout)
             nextFocusLayoutItem = layout.itemAtPosition(row, col)
             nextFocusCell = nextFocusLayoutItem.widget() if nextFocusLayoutItem else None
             assert isinstance(nextFocusCell, Cell)
@@ -160,42 +166,3 @@ class SudokuGridView(QFrame):
             assert isinstance(cellLineEdit, CellLineEdit)
             cellLineEdit.setReadOnly(self.in_edit_mode)                       
 
-
-'''
-    def setCellStyleSheet(self):
-        for i in range(self.gridLayout.count()):
-            item = self.gridLayout.itemAt(i)
-            if item is not None:
-                widget = item.widget()
-                if isinstance(widget, CellLineEdit):
-                    widget.setStyleSheet(f"""
-                        QLineEdit {{
-                            border: {CELL_BORDER_WIDTH}px {CELL_BORDER_STYLE} {CELL_BORDER_COLOR};
-                            border-radius: {CELL_BORDER_RADIUS}px;
-                            background-color: {CELL_BACKGROUND_COLOR};
-                            selection-background-color: {CELL_SELECTION_BACKGROUND_COLOR};
-                            color: {CELL_FONT_COLOR};
-                            font-size: {CELL_FONT_SIZE}px;
-                            outline-color: {CELL_OUTLINE_COLOR};
-                            outline-radius: {CELL_OUTLINE_RADIUS};
-                            outline-style: {CELL_OUTLINE_STYLE};
-                            padding: {CELL_PADDING}px;
-                            margin: {CELL_MARGIN}px;
-
-                        }}
-                        QLineEdit:focus {{
-                            border: {CELL_FOCUS_BORDER_WIDTH}px {CELL_FOCUS_BORDER_STYLE} {CELL_FOCUS_BORDER_COLOR};
-                            border-radius: {CELL_FOCUS_BORDER_RADIUS}px;
-                            background-color: {CELL_FOCUS_BACKGROUND_COLOR};
-                            selection-background-color: {CELL_FOCUS_SELECTION_BACKGROUND_COLOR};
-                            color: {CELL_FOCUS_FONT_COLOR};
-                            font-size: {CELL_FOCUS_FONT_SIZE}px;
-                            outline-color: {CELL_OUTLINE_COLOR};
-                            outline-radius: {CELL_FOCUS_OUTLINE_RADIUS};
-                            outline-style: {CELL_FOCUS_OUTLINE_STYLE};
-                            padding: {CELL_FOCUS_PADDING}px;
-                            margin: {CELL_FOCUS_MARGIN}px;
-                        }}
-                    """)
-        self.updateGeometry()
-'''
