@@ -39,7 +39,8 @@ class Cell(QWidget):
         self.row = row
         self.col = col
         self.display_as_hint = False
-        
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
         # stacked_widget allows Cell to swap between visible child widgets
         self.stacked_widget = QStackedWidget(self)
         self.stacked_widget.installEventFilter(parent)
@@ -62,6 +63,9 @@ class Cell(QWidget):
         self.myLayout.setContentsMargins(0, 0, 0, 0)
         #self.myLayout.setSpacing(0)
         self.setLayout(self.myLayout)
+
+    def get_cell_widget(self):
+        return self.stacked_widget.currentWidget()
 
     def show_solution(self):
         self.mode = CellViewMode.SOLUTION

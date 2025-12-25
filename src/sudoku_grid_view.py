@@ -50,7 +50,7 @@ class SudokuGridView(QFrame):
         side = min(self.width(), self.height())
         self.resize(side, side)
         parent = self.parent()
-        assert isinstance(parent, QWidget)
+        assert isinstance(parent, QWidget) 
         self.move(parent.rect().center() - self.rect().center())
 
     def handleKeyPress(self, key):
@@ -81,7 +81,7 @@ class SudokuGridView(QFrame):
             currentFocus = self.mainWindow.get_current_cell()
             assert isinstance(currentFocus, Cell)
             row, col = currentFocus.row, currentFocus.col
-            
+
             # after getting the current row/col, handle finding the next
             # cells row/col, wrapping the row or column 
             if SCROLL_MODE == "no v wrap":    # don't wrap at the vertical limits
@@ -119,11 +119,7 @@ class SudokuGridView(QFrame):
             nextFocusLayoutItem = layout.itemAtPosition(row, col)
             nextFocusCell = nextFocusLayoutItem.widget() if nextFocusLayoutItem else None
             assert isinstance(nextFocusCell, Cell)
-            nextFocusStackedWidget = nextFocusCell.findChild(QStackedWidget)
-            assert isinstance(nextFocusStackedWidget, QStackedWidget)
-            nextFocusWidget = nextFocusStackedWidget.widget(0)
-            assert isinstance(nextFocusWidget, CellEdit)
-
+            nextFocusWidget = nextFocusCell.get_cell_widget()
             nextFocusWidget.setFocus()
 
             return True
