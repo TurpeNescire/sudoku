@@ -48,14 +48,18 @@ class CellEdit(QLineEdit):
     def resetStyleSheet(self):
         side_border_width = []
         if self.row == 2 or self.row == 5:
-            side_border_width.append(f"border-bottom-width: {CELL_BORDER_SIDE_WIDTH}px;")
+            side_border_width.append(f"border-bottom: {HINT_BORDER_SIDE_WIDTH}px {HINT_BORDER_SIDE_STYLE} {HINT_BORDER_SIDE_COLOR};")
+            #side_border_width.append(f"border-bottom-width: {CELL_BORDER_SIDE_WIDTH}px;")
         elif self.row == 3 or self.row == 6:
-            side_border_width.append(f"border-top-width: {CELL_BORDER_SIDE_WIDTH}px;")
+            side_border_width.append(f"border-top: {HINT_BORDER_SIDE_WIDTH}px {HINT_BORDER_SIDE_STYLE} {HINT_BORDER_SIDE_COLOR};")
+            #side_border_width.append(f"border-top-width: {CELL_BORDER_SIDE_WIDTH}px;")
         
         if self.col == 2 or self.col == 5:
-            side_border_width.append(f"\t\tborder-right-width: {CELL_BORDER_SIDE_WIDTH}px;")
+            #side_border_width.append(f"\t\tborder-right-width: {CELL_BORDER_SIDE_WIDTH}px;")
+            side_border_width.append(f"border-right: {HINT_BORDER_SIDE_WIDTH}px {HINT_BORDER_SIDE_STYLE} {HINT_BORDER_SIDE_COLOR};")
         elif self.col == 3 or self.col == 6:
-            side_border_width.append(f"\t\tborder-left-width: {CELL_BORDER_SIDE_WIDTH}px;")
+            #side_border_width.append(f"\t\tborder-left-width: {CELL_BORDER_SIDE_WIDTH}px;")
+            side_border_width.append(f"border-left: {HINT_BORDER_SIDE_WIDTH}px {HINT_BORDER_SIDE_STYLE} {HINT_BORDER_SIDE_COLOR};")
 
         side_border_width = "\n".join(side_border_width)
 

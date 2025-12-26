@@ -39,7 +39,10 @@ class Cell(QWidget):
         self.row = row
         self.col = col
         self.display_as_hint = False
-        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+        policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        policy.setHeightForWidth(True)
+        self.setSizePolicy(policy)
 
         # stacked_widget allows Cell to swap between visible child widgets
         self.stacked_widget = QStackedWidget(self)
@@ -98,4 +101,20 @@ class Cell(QWidget):
             #self.show_compact_hints()
 #        elif self.mode == CellViewMode.HINT_COMPACT:
 #            self.show_solution()
+
+
+#    def resizeEvent(self, event):
+#        super().resizeEvent(event)
+
+# does this do anything to keep square cells?
+    def heightForWidth(self, width):
+        return width  # Always return same as width for square
+
+    def sizeHint(self):
+        parent = self.parentWidget()
+        if parent:
+            side = min(parent.width(), parent.height()) // 9
+            return QSize(side, side)
+        return QSize(30, 30)
+    
 

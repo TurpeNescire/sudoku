@@ -22,15 +22,15 @@ class SudokuGridView(QFrame):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus) 
         self.mainWindow = parent
 
-        layout = QGridLayout()
-        layout.setSpacing(0)
+        gridLayout = QGridLayout()
+        gridLayout.setSpacing(0)
         for row in range(9):
             for col in range(9):
                 cell = Cell(self, row, col)
                 cell.installEventFilter(self)
-                layout.addWidget(cell, row, col)
+                gridLayout.addWidget(cell, row, col)
 
-        self.setLayout(layout)
+        self.setLayout(gridLayout)
 
     def eventFilter(self, obj, event):
         # intercept key press events from interior cell widgets
@@ -47,18 +47,35 @@ class SudokuGridView(QFrame):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        side = min(self.width(), self.height())
-        self.resize(side, side)
+        #self.setUpdatesEnabled(False)                  # optimization, doesn't work well
         parent = self.parent()
         assert isinstance(parent, QWidget) 
+        side = min(parent.width(), parent.height())
+        center = parent.rect().center()
+        self.setGeometry(
+            center.x() - side // 2,
+            center.y() - side // 2,
+            side,
+            side
+        )
         self.move(parent.rect().center() - self.rect().center())
+        #self.setUpdatesEnabled(True)
 
+# old implementation, distorts and flickers and doesn't keep aspect ratio
+#    def resizeEvent(self, event):
+#        super().resizeEvent(event)
+#        side = min(self.width(), self.height())
+#        self.resize(side, side)
+#        parent = self.parent()
+#        assert isinstance(parent, QWidget) 
+#        self.move(parent.rect().center() - self.rect().center())
+#
     def handleKeyPress(self, key):
         # move the current focus highlight to the next cell
         if (
             key == Qt.Key.Key_Return or key == Qt.Key.Key_Up or
             key == Qt.Key.Key_Down or key == Qt.Key.Key_Left or
-            key == Qt.Key.Key_Right
+            key == Qt.Key.Key_Right or key == Qt.Key.Key_Tab
         ):
             currentFocus = self.focusWidget()
 
@@ -92,7 +109,7 @@ class SudokuGridView(QFrame):
                     index = (index - 9) % 81
                 elif key == Qt.Key.Key_Left:
                     index = (index - 1) % 81
-                elif key == Qt.Key.Key_Right:
+                elif key == Qt.Key.Key_Right or key == Qt.Key.Key_Tab:
                     index = (index + 1) % 81
                 row, col = divmod(index, 9)
             elif SCROLL_MODE == "v wrap":      # wrap at the vertical limits
@@ -108,7 +125,7 @@ class SudokuGridView(QFrame):
                     col, row = (col - 1) % 9, row
                     if col == 8:
                         row = (row - 1) % 9
-                elif key == Qt.Key.Key_Right:
+                elif key == Qt.Key.Key_Right or key == Qt.Key.Key_Tab:
                     col, row = (col + 1) % 9, row
                     if col == 0:
                         row = (row + 1) % 9
