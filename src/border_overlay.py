@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QWidget
 from PySide6.QtGui import QPainter, QPen, QColor
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 
 from sudoku_settings import *
 
@@ -23,24 +23,37 @@ class BorderOverlay(QWidget):
         x_offset = (self.width() - overlaySize) / 2
         y_offset = (self.height() - overlaySize) / 2
 
-        for row in range(self._gridSize + 1):
-            for col in range(self._gridSize + 1):
-                x = x_offset + col * cellSize
-                y = y_offset + row * cellSize
+        # Pens
+        thinPen = QPen(QColor(BORDER_THIN_COLOR), 1)
+        thinPen.setStyle(BORDER_THIN_STYLE)
+        thickPen = QPen(QColor(BORDER_THICK_COLOR), 3)
+        thickPen.setStyle(BORDER_THICK_STYLE)
 
-                # Vertical lines
-                if col < self._gridSize:
-                    pen = QPen(QColor(BORDER_THICK_COLOR) if col % 3 == 0 else QColor(BORDER_THIN_COLOR),
-                               3 if col % 3 == 0 else 1)
-                    pen.setStyle(BORDER_THICK_STYLE if col % 3 == 0 else BORDER_THIN_STYLE)
-                    painter.setPen(pen)
-                    painter.drawLine(x, y_offset, x, y_offset + overlaySize)    # type: ignore
 
-                # Horizontal lines
-                if row < self._gridSize:
-                    pen = QPen(QColor(BORDER_THICK_COLOR) if row % 3 == 0 else QColor(BORDER_THIN_COLOR),
-                               3 if row % 3 == 0 else 1)
-                    pen.setStyle(BORDER_THICK_STYLE if row % 3 == 0 else BORDER_THIN_STYLE)
-                    painter.setPen(pen)
-                    painter.drawLine(x_offset, y, x_offset + overlaySize, y)    # type: ignore
+
+        # Draw thin and thick boundary lines
+        for rowOrColIndex in range(1, self._gridSize + 1):
+            if rowOrColIndex % 3 == 0:          # thick boundary
+                painter.setPen(thickPen)
+            else:                               # thin boundary
+                painter.setPen(thinPen)
+
+            # vertical and horizontal pixel position
+            pos = rowOrColIndex * cellSize
+
+            # vertical
+            painter.drawLine(
+                x_offset + pos,
+                y_offset,
+                x_offset + pos,
+                y_offset + overlaySize
+            )
+
+            # horizontal
+            painter.drawLine(
+                x_offset,
+                y_offset + pos,
+                x_offset + overlaySize,
+                y_offset + pos
+            )
 

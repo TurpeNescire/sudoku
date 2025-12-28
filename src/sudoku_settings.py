@@ -12,10 +12,14 @@ SCROLL_MODE = "v wrap" # "wrap/no wrap"
 BORDER_THICK_COLOR = "black"
 #BORDER_THIN_COLOR = "blue"
 BORDER_THIN_COLOR = "lightgray"
-BORDER_THIN_STYLE = Qt.PenStyle.DotLine
+BORDER_THIN_STYLE = Qt.PenStyle.DashLine        # SolidLine, DashLine, DotLine, DashDotLine, DashDotDotLine
 BORDER_THICK_STYLE = Qt.PenStyle.SolidLine
 
 CELL_EDIT_BACKGROUND_COLOR = "white"
 CELL_EDIT_FONT_COLOR = "blue"
 CELL_EDIT_BORDER_SIZE = "none"
 CELL_EDIT_PADDING_SIZE = 0
+
+HINT_CONTAINER_BACKGROUND_COLOR = Qt.white
+HINT_CONTAINER_FONT_SIZE_SCALE = 2.5
+HINT_CONTAINER_FONT_COLOR = "blue"

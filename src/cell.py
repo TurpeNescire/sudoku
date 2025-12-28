@@ -1,7 +1,7 @@
 from enum import Enum
 
-from PySide6.QtWidgets import QWidget, QStackedWidget
-from PySide6.QtCore import QObject, QEnum
+from PySide6.QtWidgets import QWidget, QStackedWidget, QFrame
+from PySide6.QtCore import QObject, QEnum, Qt
 
 from cell_edit import CellEdit
 from hint_container import HintContainer
@@ -29,6 +29,7 @@ class Cell(QWidget):
 
         # stacked widget for switching between multiple game view modes
         self._stacked = QStackedWidget(self)
+
         self._cellEdit = CellEdit(row, col)
         self._hintContainer = HintContainer()
 
@@ -38,8 +39,8 @@ class Cell(QWidget):
 
         self._gameMode = GameViewObject()
         #self._stacked.setCurrentWidget(self._cellEdit)
-        #self.setMode(GameViewMode.HINT_GRID)
-        self.setMode(GameViewMode.SOLUTION)
+        self.setMode(GameViewMode.HINT_GRID)
+#        self.setMode(GameViewMode.SOLUTION)
 
 
     def resizeEvent(self, event):

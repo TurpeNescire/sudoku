@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QFrame
+from PySide6.QtCore import QTimer
 
 from cell import Cell, GameViewMode
 from border_overlay import BorderOverlay
@@ -46,11 +47,26 @@ class GameGrid(QFrame):
                 )
 
         # set overlay to cover the entire game grid
-        self.overlay.setGeometry(x_offset, y_offset, cellSize * self._gridSize, cellSize * self._gridSize)
+        #self.overlay.setGeometry(x_offset, y_offset, cellSize * self._gridSize, cellSize * self._gridSize) 
+
 
         super().resizeEvent(event)
+        QTimer.singleShot(17, self.updateOverlay)
+
+    
+    def updateOverlay(self):
+        gridWidth = self.width()
+        gridHeight = self.height()
+        size = min(gridWidth, gridHeight)
+        cellSize = size // self._gridSize
+
+        x_offset = (gridWidth - cellSize * self._gridSize) // 2
+        y_offset = (gridHeight - cellSize * self._gridSize) // 2
+
+        self.overlay.setGeometry(x_offset, y_offset, cellSize * self._gridSize, cellSize * self._gridSize)
+        self.overlay.raise_()  # Optional: ensure stacking order if needed
 
 
     def set_all_cells_mode(self, mode: GameViewMode):
         for cell in self._cells:
-            cell.set_mode(mode)
+            cell.setMode(mode)
