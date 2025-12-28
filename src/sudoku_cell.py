@@ -40,9 +40,9 @@ class Cell(QWidget):
         self.col = col
         self.display_as_hint = False
 
-        policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        policy.setHeightForWidth(True)
-        self.setSizePolicy(policy)
+        #policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        #policy.setHeightForWidth(True)
+        #self.setSizePolicy(policy)
 
         # stacked_widget allows Cell to swap between visible child widgets
         self.stacked_widget = QStackedWidget(self)
@@ -110,11 +110,11 @@ class Cell(QWidget):
     def heightForWidth(self, width):
         return width  # Always return same as width for square
 
-    def sizeHint(self):
-        parent = self.parentWidget()
-        if parent:
-            side = min(parent.width(), parent.height()) // 9
-            return QSize(side, side)
-        return QSize(30, 30)
-    
+#    def sizeHint(self):
+#        parent = self.parentWidget()
+#        if parent:
+#            side = min(parent.width(), parent.height()) // 9
+#            return QSize(side, side)
+#        return QSize(30, 30)
+#    
 

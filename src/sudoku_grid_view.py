@@ -48,18 +48,18 @@ class SudokuGridView(QFrame):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         #self.setUpdatesEnabled(False)                  # optimization, doesn't work well
-        parent = self.parent()
-        assert isinstance(parent, QWidget) 
-        side = min(parent.width(), parent.height())
-        center = parent.rect().center()
-        self.setGeometry(
-            center.x() - side // 2,
-            center.y() - side // 2,
-            side,
-            side
-        )
-        self.move(parent.rect().center() - self.rect().center())
-        #self.setUpdatesEnabled(True)
+#        parent = self.parent()
+#        assert isinstance(parent, QWidget) 
+#        side = min(parent.width(), parent.height())
+#        center = parent.rect().center()
+#        self.setGeometry(
+#            center.x() - side // 2,
+#            center.y() - side // 2,
+#            side,
+#            side
+#        )
+#        self.move(parent.rect().center() - self.rect().center())
+#        #self.setUpdatesEnabled(True)
 
 # old implementation, distorts and flickers and doesn't keep aspect ratio
 #    def resizeEvent(self, event):
