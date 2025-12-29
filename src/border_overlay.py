@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QWidget
 from PySide6.QtGui import QPainter, QPen, QColor
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
 
 from sudoku_settings import *
 
@@ -10,8 +10,8 @@ class BorderOverlay(QWidget):
         super().__init__(parent)
 
         self._gridSize = gridSize
-        self.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
 
     def paintEvent(self, event):
@@ -28,8 +28,6 @@ class BorderOverlay(QWidget):
         thinPen.setStyle(BORDER_THIN_STYLE)
         thickPen = QPen(QColor(BORDER_THICK_COLOR), 3)
         thickPen.setStyle(BORDER_THICK_STYLE)
-
-
 
         # Draw thin and thick boundary lines
         for rowOrColIndex in range(0, self._gridSize + 1):

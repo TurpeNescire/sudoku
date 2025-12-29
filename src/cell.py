@@ -1,8 +1,7 @@
 from enum import Enum
 
-from PySide6.QtWidgets import QWidget, QStackedWidget
-from PySide6.QtCore import Qt, QObject, QEnum, QEvent
-from PySide6.QtGui import QPainter, QPen, QColor
+from PySide6.QtWidgets import QWidget, QStackedWidget, QGraphicsOpacityEffect
+from PySide6.QtCore import Qt, QObject, QEnum, QPropertyAnimation, QEasingCurve
 
 from cell_edit import CellEdit
 from hint_container import HintContainer
@@ -32,7 +31,7 @@ class Cell(QWidget):
 
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         # allow paintEvent to trigger for drawing focus
-        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self._hasFocus = False
 
         # stacked widget for switching between multiple game view modes
@@ -94,25 +93,3 @@ class Cell(QWidget):
         elif self._gameMode == GameViewMode.HINT_COMPACT:
             self.setMode(GameViewMode.SOLUTION)
 
-
-#    def paintEvent(self, event):
-#        if self._hasFocus is True:
-#            print(f"{self}.paintEvent() _hasFocus={self._hasFocus}")
-#
-#        super().paintEvent(event)
-#
-#        if not self._hasFocus:
-#            return
-#
-#        painter = QPainter(self)
-#        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-#
-#        pen = QPen(QColor("red"))
-#        pen.setWidth(2)
-#        #pen = QPen(QColor("#3399FF", 2))
-#        painter.setPen(pen)
-#        painter.setBrush(Qt.BrushStyle.NoBrush)
-#
-#        rect = self.rect().adjusted(2, 2, -2, -2)
-#        painter.drawRoundedRect(rect, 4, 4)
-#

@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QWidget
-from PySide6.QtGui import QPainter, QPen, QColor
-from PySide6.QtCore import Qt
+from PySide6.QtGui import QPainter, QPen, QColor, QBrush, QPainterPath
+from PySide6.QtCore import Qt, QRectF
 
 from sudoku_settings import *
 
@@ -10,8 +10,8 @@ class CellFocusOverlay(QWidget):
         super().__init__(parent)
         self._visible = False
 
-        self.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
 
     def setFocused(self, focused: bool):
@@ -26,6 +26,29 @@ class CellFocusOverlay(QWidget):
 
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)   
+        bgColor = QColor(CELL_FOCUS_BACKGROUND_COLOR)
+        bgColor.setAlpha(CELL_FOCUS_BACKGROUND_ALPHA)
+        bgPen = QPen(bgColor)  # Example color
+        painter.setPen(bgPen)
+        bgBrush = QBrush(bgColor)  # Example fill color
+        painter.setBrush(bgBrush)
+
+        path = QPainterPath()
+        rect = event.rect()
+        #rect.adjust(2, 2, -2, -2)
+        CELL_FOCUS_BACKGROUND_INSET = 0
+        rect.adjust(
+                CELL_FOCUS_BACKGROUND_INSET,
+                CELL_FOCUS_BACKGROUND_INSET,
+                -CELL_FOCUS_BACKGROUND_INSET,
+                -CELL_FOCUS_BACKGROUND_INSET
+        )
+        path.addRect(rect)
+
+        painter.fillPath(path, painter.brush())
+        painter.strokePath(path, painter.pen())
 
         color = QColor(CELL_FOCUS_RECT_COLOR)
         color.setAlpha(CELL_FOCUS_RECT_ALPHA)

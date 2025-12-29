@@ -10,8 +10,9 @@ class GameGrid(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self._viewMode = GameViewMode.SOLUTION
         #self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+        self._viewMode = GameViewMode.SOLUTION
         self.installEventFilter(self)
 
         self._gridSize = GRID_SIZE
@@ -28,6 +29,8 @@ class GameGrid(QFrame):
 
 
     def resizeEvent(self, event):
+        super().resizeEvent(event)      # TODO: does it matter where this goes?
+
         gridWidth = self.width()
         gridHeight = self.height()
         size = min(gridWidth, gridHeight)
@@ -50,11 +53,6 @@ class GameGrid(QFrame):
                     cellSize
                 )
 
-        # set overlay to cover the entire game grid
-        #self.overlay.setGeometry(x_offset, y_offset, cellSize * self._gridSize, cellSize * self._gridSize) 
-
-
-        super().resizeEvent(event)
         QTimer.singleShot(OVERLAY_UPDATE_TIMER_MS, self.updateOverlay)
 
     
@@ -72,9 +70,6 @@ class GameGrid(QFrame):
 
 
     def updateGameViewModes(self):
-#        for row in range(self._gridSize):
-#            for col in range(self._gridSize):
-#                index = row * self._gridSize + col
         for cell in self._cells:
             if self._viewMode == GameViewMode.SOLUTION:
                 cell.setMode(GameViewMode.SOLUTION)
@@ -112,43 +107,46 @@ class GameGrid(QFrame):
             key == Qt.Key.Key_Right or key == Qt.Key.Key_Tab
         ):
             currentFocus = self.focusWidget()
-            print(f"GameGrid.handleKeyPress({key}) with currentFocus {currentFocus}")
-
-            # runs at startup to set the current focus to the CellLineEdit
-            # at position (0,0) in the grid layout
+            assert isinstance(currentFocus, Cell)
+            #print(f"GameGrid.handleKeyPress({key}) with currentFocus {currentFocus}")
 
             # after getting the current row/col, handle finding the next
             # cells row/col, wrapping the row or column 
-#            if SCROLL_MODE == "no v wrap":    # don't wrap at the vertical limits
-#                index = row * 9 + col
-#                if key == Qt.Key.Key_Return or key == Qt.Key.Key_Down:
-#                    index = (index + 9) % 81
-#                elif key == Qt.Key.Key_Up:
-#                    index = (index - 9) % 81
-#                elif key == Qt.Key.Key_Left:
-#                    index = (index - 1) % 81
-#                elif key == Qt.Key.Key_Right or key == Qt.Key.Key_Tab:
-#                    index = (index + 1) % 81
-#                row, col = divmod(index, 9)
-#            elif SCROLL_MODE == "v wrap":      # wrap at the vertical limits
-#                if key == Qt.Key.Key_Return or key == Qt.Key.Key_Down:
-#                    row, col = (row + 1) % 9, col
-#                    if row == 0:
-#                        col = (col + 1) % 9
-#                elif key == Qt.Key.Key_Up:
-#                    row, col = (row - 1) % 9, col
-#                    if row == 8:
-#                        col = (col - 1) % 9
-#                elif key == Qt.Key.Key_Left:
-#                    col, row = (col - 1) % 9, row
-#                    if col == 8:
-#                        row = (row - 1) % 9
-#                elif key == Qt.Key.Key_Right or key == Qt.Key.Key_Tab:
-#                    col, row = (col + 1) % 9, row
-#                    if col == 0:
-#                        row = (row + 1) % 9
-#
-            # get the widget of the next focus item using new row/col values
+            row, col = currentFocus.row, currentFocus.col
+            if SCROLL_MODE == "no v wrap":    # don't wrap at the vertical limits
+                index = row * 9 + col
+                if key == Qt.Key.Key_Return or key == Qt.Key.Key_Down:
+                    index = (index + 9) % 81
+                elif key == Qt.Key.Key_Up:
+                    index = (index - 9) % 81
+                elif key == Qt.Key.Key_Left:
+                    index = (index - 1) % 81
+                elif key == Qt.Key.Key_Right or key == Qt.Key.Key_Tab:
+                    index = (index + 1) % 81
+                row, col = divmod(index, 9)
+            elif SCROLL_MODE == "v wrap":      # wrap at the vertical limits
+                if key == Qt.Key.Key_Return or key == Qt.Key.Key_Down:
+                    row, col = (row + 1) % 9, col
+                    if row == 0:
+                        col = (col + 1) % 9
+                elif key == Qt.Key.Key_Up:
+                    row, col = (row - 1) % 9, col
+                    if row == 8:
+                        col = (col - 1) % 9
+                elif key == Qt.Key.Key_Left:
+                    col, row = (col - 1) % 9, row
+                    if col == 8:
+                        row = (row - 1) % 9
+                elif key == Qt.Key.Key_Right or key == Qt.Key.Key_Tab:
+                    col, row = (col + 1) % 9, row
+                    if col == 0:
+                        row = (row + 1) % 9
+            nextIndex = row * GRID_SIZE + col
+            nextFocus = self._cells[nextIndex]
+            assert isinstance(nextFocus, Cell)
+            #print(f"GameGrid.handleKeyPress({key}) with nextFocus {nextFocus}")
+            nextFocus.setFocus()
+             # get the widget of the next focus item using new row/col values
 
             return True
         elif key == Qt.Key.Key_Tab:         # either Qt or MacOS seems to coopt Key_Tab events, this never runs

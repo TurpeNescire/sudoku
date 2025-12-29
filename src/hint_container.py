@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QLabel, QFrame
+from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Qt, QRectF, QRect
 from PySide6.QtGui import QPainter, QColor, QFont 
 
@@ -18,7 +18,7 @@ class HintContainer(QWidget):
                 self._hints.append(hint)
 
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.setAttribute(Qt.WA_OpaquePaintEvent, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
         self.setAutoFillBackground(False)
 
 
@@ -74,14 +74,4 @@ class HintContainer(QWidget):
                     hint_text
                 )
 
-#        availableWidth = self.width() - HINT_INSET * 2
-#        availableHeight = self.height() - HINT_INSET * 2
-#        cellSize = min(availableWidth, availableHeight)
-#        left = (self.width() - cellSize) / 2
-#        top = (self.height() - cellSize) / 2
-#        left = int(round(left))
-#        top = int(round(top))
-#        size = int(round(cellSize))
-#        drawRect = QRect(left, top, size, size)
-#        hintSize = cellSize / 3
-#
+
