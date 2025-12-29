@@ -11,7 +11,8 @@ class CellEdit(QLineEdit):
         self._row = row
         self._col = col
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        #self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.setFrame(False)
         self.setText(f"{self._row},{self._col}")
         self.setStyleSheet(f"""

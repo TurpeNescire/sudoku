@@ -32,7 +32,7 @@ class BorderOverlay(QWidget):
 
 
         # Draw thin and thick boundary lines
-        for rowOrColIndex in range(1, self._gridSize + 1):
+        for rowOrColIndex in range(0, self._gridSize + 1):
             if rowOrColIndex % 3 == 0:          # thick boundary
                 painter.setPen(thickPen)
             else:                               # thin boundary

@@ -1,10 +1,12 @@
 from enum import Enum
 
-from PySide6.QtWidgets import QWidget, QStackedWidget, QFrame
-from PySide6.QtCore import QObject, QEnum, Qt
+from PySide6.QtWidgets import QWidget, QStackedWidget
+from PySide6.QtCore import Qt, QObject, QEnum, QEvent
+from PySide6.QtGui import QPainter, QPen, QColor
 
 from cell_edit import CellEdit
 from hint_container import HintContainer
+from cell_focus_overlay import CellFocusOverlay
 
 
 class GameViewMode(Enum):
@@ -22,16 +24,28 @@ class GameViewObject(QObject):
 
 
 class Cell(QWidget):
-    def __init__(self, row, col, parent=None):
+    def __init__(self, row, col, parent):
         super().__init__(parent)
+
         self.row = row
         self.col = col
+
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        # allow paintEvent to trigger for drawing focus
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self._hasFocus = False
 
         # stacked widget for switching between multiple game view modes
         self._stacked = QStackedWidget(self)
 
+        self._focusOverlay = CellFocusOverlay(self)
+        self._focusOverlay.setGeometry(self.rect())
+        self._focusOverlay.raise_()
+
         self._cellEdit = CellEdit(row, col)
+        self._cellEdit.installEventFilter(parent)
         self._hintContainer = HintContainer()
+        self._hintContainer.installEventFilter(parent)
 
         self._stacked.addWidget(self._cellEdit)
         self._stacked.addWidget(self._hintContainer)
@@ -39,13 +53,26 @@ class Cell(QWidget):
 
         self._gameMode = GameViewObject()
         #self._stacked.setCurrentWidget(self._cellEdit)
-        self.setMode(GameViewMode.HINT_GRID)
-#        self.setMode(GameViewMode.SOLUTION)
-
+        #self.setMode(GameViewMode.HINT_GRID)
+        self.setMode(GameViewMode.SOLUTION)
+       
 
     def resizeEvent(self, event):
         self._stacked.setGeometry(self.rect())
+        self._focusOverlay.setGeometry(self.rect())
         super().resizeEvent(event)
+
+
+    def focusInEvent(self, event):
+        self._hasFocus = True
+        self._focusOverlay.setFocused(True)
+        super().focusInEvent(event)
+
+
+    def focusOutEvent(self, event):
+        self._hasFocus = False
+        self._focusOverlay.setFocused(False)
+        super().focusOutEvent(event)
 
 
     def setMode(self, mode: GameViewMode):
@@ -54,6 +81,9 @@ class Cell(QWidget):
             self._stacked.setCurrentWidget(self._cellEdit)
         elif mode == GameViewMode.HINT_GRID or mode == GameViewMode.HINT_COMPACT:
             self._stacked.setCurrentWidget(self._hintContainer)
+        elif mode == GameViewMode.HINT_COMPACT:
+            print(f"{self.__repr__}.setMode {mode} set, not implemented")
+            #self._stacked.setCurrentWidget(self._hintCompact)
 
 
     def cycleMode(self):
@@ -64,3 +94,25 @@ class Cell(QWidget):
         elif self._gameMode == GameViewMode.HINT_COMPACT:
             self.setMode(GameViewMode.SOLUTION)
 
+
+#    def paintEvent(self, event):
+#        if self._hasFocus is True:
+#            print(f"{self}.paintEvent() _hasFocus={self._hasFocus}")
+#
+#        super().paintEvent(event)
+#
+#        if not self._hasFocus:
+#            return
+#
+#        painter = QPainter(self)
+#        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+#
+#        pen = QPen(QColor("red"))
+#        pen.setWidth(2)
+#        #pen = QPen(QColor("#3399FF", 2))
+#        painter.setPen(pen)
+#        painter.setBrush(Qt.BrushStyle.NoBrush)
+#
+#        rect = self.rect().adjusted(2, 2, -2, -2)
+#        painter.drawRoundedRect(rect, 4, 4)
+#

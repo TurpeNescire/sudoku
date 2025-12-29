@@ -21,7 +21,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(MAIN_WINDOW_X, MAIN_WINDOW_Y, MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT)
 
         # connect signals
-        self.cycleGameModeTriggeredSignal.connect(self._grid.set_all_cells_mode)
+        self.cycleGameModeTriggeredSignal.connect(self._grid.setGameModeTo)
         #self.solve_mode_triggered_signal.connect(self._grid.solve_mode)
 
         # set up menus
@@ -30,7 +30,7 @@ class MainWindow(QMainWindow):
         cycleModeAction = QAction("Cycle Game Mode", self)
         cycleModeAction.setShortcut("Ctrl+E")
         cycleModeAction.setMenuRole(QAction.MenuRole.NoRole) 
-        cycleModeAction.triggered.connect(self._grid.set_all_cells_mode)
+        cycleModeAction.triggered.connect(self._grid.setGameModeTo)
         game_menu.addAction(cycleModeAction)
         #edit_mode_action = QAction("&Edit clues..", self)
         #edit_mode_action.setShortcut("Ctrl+E")

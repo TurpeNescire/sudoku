@@ -1,26 +1,30 @@
 from PySide6.QtWidgets import QFrame
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QTimer, QEvent
 
 from cell import Cell, GameViewMode
 from border_overlay import BorderOverlay
 from sudoku_settings import *
-GRID_SIZE = 9
 
 
 class GameGrid(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self._viewMode = GameViewMode.SOLUTION
+        #self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.installEventFilter(self)
+
         self._gridSize = GRID_SIZE
         self._cells: list[Cell] = []
         for cellRow in range(self._gridSize):
             for cellCol in range(self._gridSize):
                 cell = Cell(cellRow, cellCol, self)
+                #cell.installEventFilter(self)
                 self._cells.append(cell)
 
         # overlay widget to draw borders
         self.overlay = BorderOverlay(self._gridSize, self)
-        self.overlay.raise_()
+        self.overlay.raise_()       # overlay draws last
 
 
     def resizeEvent(self, event):
@@ -51,7 +55,7 @@ class GameGrid(QFrame):
 
 
         super().resizeEvent(event)
-        QTimer.singleShot(17, self.updateOverlay)
+        QTimer.singleShot(OVERLAY_UPDATE_TIMER_MS, self.updateOverlay)
 
     
     def updateOverlay(self):
@@ -67,6 +71,99 @@ class GameGrid(QFrame):
         self.overlay.raise_()  # Optional: ensure stacking order if needed
 
 
-    def set_all_cells_mode(self, mode: GameViewMode):
+    def updateGameViewModes(self):
+#        for row in range(self._gridSize):
+#            for col in range(self._gridSize):
+#                index = row * self._gridSize + col
+        for cell in self._cells:
+            if self._viewMode == GameViewMode.SOLUTION:
+                cell.setMode(GameViewMode.SOLUTION)
+            elif self._viewMode == GameViewMode.HINT_GRID:
+                cell.setMode(GameViewMode.HINT_GRID)
+            elif self._viewMode == GameViewMode.HINT_COMPACT:
+                cell.setMode(GameViewMode.HINT_COMPACT)
+
+
+    def setGameModeTo(self, mode: GameViewMode):
         for cell in self._cells:
             cell.setMode(mode)
+
+
+    def eventFilter(self, obj, event):
+        # intercept key press events from interior cell widgets
+        # after calling cell.installEventFilter(self) in the constructor
+        # we need to do this becasue QLineEdit was eating arrow keys and escape, etc.
+        if event.type() == QEvent.Type.KeyPress:
+            return self.handleKeyPress(event.key()) 
+
+        return super().eventFilter(obj, event)
+
+
+    def keyPressEvent(self, event):
+        if self.handleKeyPress(event.key()) is False:
+            super().keyPressEvent(event)
+
+
+    def handleKeyPress(self, key):
+        # move the current focus highlight to the next cell
+        if (
+            key == Qt.Key.Key_Return or key == Qt.Key.Key_Up or
+            key == Qt.Key.Key_Down or key == Qt.Key.Key_Left or
+            key == Qt.Key.Key_Right or key == Qt.Key.Key_Tab
+        ):
+            currentFocus = self.focusWidget()
+            print(f"GameGrid.handleKeyPress({key}) with currentFocus {currentFocus}")
+
+            # runs at startup to set the current focus to the CellLineEdit
+            # at position (0,0) in the grid layout
+
+            # after getting the current row/col, handle finding the next
+            # cells row/col, wrapping the row or column 
+#            if SCROLL_MODE == "no v wrap":    # don't wrap at the vertical limits
+#                index = row * 9 + col
+#                if key == Qt.Key.Key_Return or key == Qt.Key.Key_Down:
+#                    index = (index + 9) % 81
+#                elif key == Qt.Key.Key_Up:
+#                    index = (index - 9) % 81
+#                elif key == Qt.Key.Key_Left:
+#                    index = (index - 1) % 81
+#                elif key == Qt.Key.Key_Right or key == Qt.Key.Key_Tab:
+#                    index = (index + 1) % 81
+#                row, col = divmod(index, 9)
+#            elif SCROLL_MODE == "v wrap":      # wrap at the vertical limits
+#                if key == Qt.Key.Key_Return or key == Qt.Key.Key_Down:
+#                    row, col = (row + 1) % 9, col
+#                    if row == 0:
+#                        col = (col + 1) % 9
+#                elif key == Qt.Key.Key_Up:
+#                    row, col = (row - 1) % 9, col
+#                    if row == 8:
+#                        col = (col - 1) % 9
+#                elif key == Qt.Key.Key_Left:
+#                    col, row = (col - 1) % 9, row
+#                    if col == 8:
+#                        row = (row - 1) % 9
+#                elif key == Qt.Key.Key_Right or key == Qt.Key.Key_Tab:
+#                    col, row = (col + 1) % 9, row
+#                    if col == 0:
+#                        row = (row + 1) % 9
+#
+            # get the widget of the next focus item using new row/col values
+
+            return True
+        elif key == Qt.Key.Key_Tab:         # either Qt or MacOS seems to coopt Key_Tab events, this never runs
+            return True
+        elif key == Qt.Key.Key_Space:
+            if self._viewMode == GameViewMode.SOLUTION:
+                self._viewMode = GameViewMode.HINT_GRID
+            elif self._viewMode == GameViewMode.HINT_GRID:
+                self._viewMode = GameViewMode.SOLUTION
+            #self.updateGameViewModes()
+            self.setGameModeTo(self._viewMode)
+
+            return True
+        elif key == Qt.Key.Key_Escape: 
+            return True
+       
+        return False
+
