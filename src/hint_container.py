@@ -18,7 +18,8 @@ class HintContainer(QWidget):
                 self._hints.append(hint)
 
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
+        # TODO: is this necessary?
+#        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
         self.setAutoFillBackground(False)
 
 

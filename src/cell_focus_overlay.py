@@ -11,7 +11,8 @@ class CellFocusOverlay(QWidget):
         self._visible = False
 
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        #self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)   
 
 
     def setFocused(self, focused: bool):
@@ -27,7 +28,6 @@ class CellFocusOverlay(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)   
         bgColor = QColor(CELL_FOCUS_BACKGROUND_COLOR)
         bgColor.setAlpha(CELL_FOCUS_BACKGROUND_ALPHA)
         bgPen = QPen(bgColor)  # Example color
