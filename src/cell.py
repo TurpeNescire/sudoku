@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QWidget, QStackedWidget, QGraphicsOpacityEffect
 from PySide6.QtCore import Qt, QObject, QEnum, QPropertyAnimation, QEasingCurve
 
 from cell_edit import CellEdit
-from hint_container import HintContainer
+from cell_hint import CellHint 
 from cell_focus_overlay import CellFocusOverlay
 from sudoku_settings import *
 
@@ -49,13 +49,13 @@ class Cell(QWidget):
         self._focusOverlay.setGeometry(self.rect())
         self._focusOverlay.raise_()
 
-        self._cellEdit = CellEdit(row, col)
+        self._cellEdit = CellEdit(row, col, self)
         self._cellEdit.installEventFilter(parent)
-        self._hintContainer = HintContainer()
-        self._hintContainer.installEventFilter(parent)
+        self._cellHint = CellHint(row, col, self)
+        self._cellHint.installEventFilter(parent)
 
         self._stacked.addWidget(self._cellEdit)
-        self._stacked.addWidget(self._hintContainer)
+        self._stacked.addWidget(self._cellHint)
 
 
         # overlay game mode transition effects
@@ -63,8 +63,8 @@ class Cell(QWidget):
         self._cellEdit.setGraphicsEffect(self._cellEditEffect)
         self._cellEditEffect.setOpacity(1.0)
 
-        self._hintEffect = QGraphicsOpacityEffect(self._hintContainer)
-        self._hintContainer.setGraphicsEffect(self._hintEffect)
+        self._hintEffect = QGraphicsOpacityEffect(self._cellHint)
+        self._cellHint.setGraphicsEffect(self._hintEffect)
         self._hintEffect.setOpacity(0.0)
 
         self._fadeDuration = CELL_TRANSITION_FADE_DURATION_MS
@@ -113,7 +113,7 @@ class Cell(QWidget):
             self._cellEditEffect.setOpacity(1.0)
             self._hintEffect.setOpacity(0.0)
         elif mode == GameViewMode.HINT_GRID or mode == GameViewMode.HINT_COMPACT:
-            self._stacked.setCurrentWidget(self._hintContainer)
+            self._stacked.setCurrentWidget(self._cellHint)
             self._cellEditEffect.setOpacity(0.0)
             self._hintEffect.setOpacity(1.0)
         elif mode == GameViewMode.HINT_COMPACT:

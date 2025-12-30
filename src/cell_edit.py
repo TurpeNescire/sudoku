@@ -5,7 +5,7 @@ from sudoku_settings import *
 
 
 class CellEdit(QLineEdit):
-    def __init__(self, row: int, col: int, parent=None):
+    def __init__(self, row: int, col: int, parent):
         super().__init__(parent)
 
         self._row = row

@@ -6,7 +6,7 @@ from sudoku_settings import *
 
 
 class BorderOverlay(QWidget):
-    def __init__(self, gridSize=9, parent=None):
+    def __init__(self, parent, gridSize=9):
         super().__init__(parent)
 
         self._gridSize = gridSize

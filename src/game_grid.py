@@ -25,7 +25,7 @@ class GameGrid(QFrame):
                 self._cells.append(cell)
 
         # overlay widget to draw borders
-        self.overlay = BorderOverlay(self._gridSize, self)
+        self.overlay = BorderOverlay(self, self._gridSize)
         self.overlay.raise_()       # overlay draws last
 
 

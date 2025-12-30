@@ -5,9 +5,12 @@ from PySide6.QtGui import QPainter, QColor, QFont
 from sudoku_settings import *
 
 
-class HintContainer(QWidget):
-    def __init__(self, parent=None):
+class CellHint(QWidget):
+    def __init__(self, row: int, col: int, parent):
         super().__init__(parent)
+
+        self._row = row
+        self._col = col
 
         # Example hint values, you can replace with dynamic data
         #self._hints = [[str(r * 3 + c + 1) for c in range(3)] for r in range(3)]
