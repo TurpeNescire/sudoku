@@ -6,25 +6,29 @@ from sudoku_settings import *
 
 
 class CellFocusOverlay(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         super().__init__(parent)
         self._visible = False
 
-        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        #self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)   
+        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
+        self.setAutoFillBackground(False)
 
 
     def setFocused(self, focused: bool):
         self._visible = focused
         self.update()
 
+    def getFocused(self):
+        return self._visible
+
 
 # TODO: add hover events that don't take focus
     def paintEvent(self, event):
         if not self._visible:
             return
-
+        
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 

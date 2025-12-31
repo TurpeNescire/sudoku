@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Qt, QRectF, QRect
 from PySide6.QtGui import QPainter, QColor, QFont 
 
+from game_view_mode import GameViewMode
 from sudoku_settings import *
 
 
@@ -9,36 +10,63 @@ class CellHint(QWidget):
     def __init__(self, row: int, col: int, parent):
         super().__init__(parent)
 
-        self._row = row
-        self._col = col
-
-        # Example hint values, you can replace with dynamic data
-        #self._hints = [[str(r * 3 + c + 1) for c in range(3)] for r in range(3)]
-        self._hints: list[int] = []
-        for row in range(3):
-            for col in range(3):
-                hint = row * 3 + col + 1
-                self._hints.append(hint)
+        self.row = row
+        self.col = col
+        self._mode = GameViewMode.HINT_GRID
+        self._hints = list(range(1,10))
 
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        # TODO: is this necessary?
-#        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
-        self.setAutoFillBackground(False)
 
+        # TODO: while having issues with click focus not working in hint modes,
+        # this WA doesn't appear to matter for why CellHint mouse events are
+        # never being seen
+        #self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
+
+        # TODO: is this necessary?  doesn't appear to be
+        #self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
+
+        # TODO: remove, doesn't seem necessary
+        #self.setAutoFillBackground(False)
+
+
+    def setMode(self, mode: GameViewMode):
+        self._mode = mode
+        self.update()
 
     def setHints(self, hints):
         self._hints = hints
         self.update()
 
 
+#    def mousePressEvent(self, event):
+#        print(f"r{self.row}c{self.col} {self}.mousePressEvent {event}")
+#        super().mousePressEvent(event)
+#        #event.ignore()
+#
+#    def mouseReleaseEvent(self, event):
+#        print(f"r{self.row}c{self.col} {self}.mouseReleaseEvent {event}")
+#        super().mouseReleaseEvent(event)
+#        #event.ignore()
+#
+#    def mouseDoubleClickEvent(self, event):
+#        print(f"r{self.row}c{self.col} {self}.mouseDoubleClickEvent {event}")
+#        super().mouseReleaseEvent(event)
+#        #event.ignore()
+
+
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        # Optional: fill background (transparent or white)
-        #painter.fillRect(self.rect(), Qt.transparent)
         painter.fillRect(self.rect(), HINT_BACKGROUND_COLOR)
+        
+        if self._mode == GameViewMode.HINT_GRID:
+            self._paintGridHints(painter)
+        elif self._mode == GameViewMode.HINT_COMPACT:
+            self._paintCompactHints(painter)
 
+    
+    def _paintGridHints(self, painter): 
         availableWidth = self.width()
         availableHeight = self.height()
         cellSize = min(availableWidth, availableHeight)
@@ -79,3 +107,5 @@ class CellHint(QWidget):
                 )
 
 
+    def _paintCompactHints(self, painter):
+        print(f"{self}._paintCompactHints stub")

@@ -3,4 +3,4 @@ Cell
  ├─ CellHint   (QWidget, paintEvent)
  └─ FocusOverlay
 
-
+Keyboard Focus vs. Visual Focus, hierarchy
