@@ -3,7 +3,8 @@ from PySide6.QtCore import Qt, QEvent, QPropertyAnimation, QEasingCurve
 
 from cell_edit import CellEdit
 from cell_hint import CellHint 
-from cell_focus_overlay import CellFocusOverlay
+from cell_overlay import CellOverlay
+from cell_overlay_type import CellOverlayType
 from sudoku_settings import *
 from game_view_mode import GameViewMode
 
@@ -26,7 +27,7 @@ class Cell(QWidget):
 
         self._cellEdit = CellEdit(row, col, self)
         self._cellHint = CellHint(row, col, self)
-        self._focusOverlay = CellFocusOverlay(self)
+        self._overlay = CellOverlay(self)
 
         # TODO: which of these are necessary and why
         # if cellEdit receives an event, parent is first
@@ -41,7 +42,7 @@ class Cell(QWidget):
         # stacking order
         self._cellEdit.raise_()
         self._cellHint.raise_()
-        self._focusOverlay.raise_()
+        self._overlay.raise_()
 
         # overlay game mode transition effects
         self._cellEditEffect = QGraphicsOpacityEffect(self._cellEdit)
@@ -77,11 +78,10 @@ class Cell(QWidget):
         rect = self.rect()
         self._cellEdit.setGeometry(rect)
         self._cellHint.setGeometry(rect)
-        self._focusOverlay.setGeometry(rect)
-        self._focusOverlay.raise_()
+        self._overlay.setGeometry(rect)
+        self._overlay.raise_()
 
         super().resizeEvent(event)
-
 
     def focusInEvent(self):
         self.setFocused()
@@ -89,20 +89,20 @@ class Cell(QWidget):
     def focusOutEvent(self):
         self.setFocused(False)
 
-    def setFocused(self, hasFocus=True):
-        self._cellEdit.setFocus()   # make sure Qt focus is updated when logical focus is
-        self._focusOverlay.setFocused(hasFocus)
-
     def hoverEnterEvent(self):
         pass
-        
+
+
+    def setFocused(self, hasFocus=True) -> None:
+        self._cellEdit.setFocus()   # make sure Qt focus is updated when logical focus is
+        self._overlay.setOverlayVisible(CellOverlayType.FOCUS, hasFocus)        
 
     # TODO: do we need this?
-    def getFocused(self):
-        return self._focusOverlay.getFocused()
+    def getOverlayVisible(self, overlayType: CellOverlayType) -> bool:
+        return self._overlay.getOverlayVisible(overlayType)
 
 
-    def setViewMode(self, mode: GameViewMode):
+    def setViewMode(self, mode: GameViewMode) -> None:
         self._gameMode = mode
 
         if mode == GameViewMode.SOLUTION:
