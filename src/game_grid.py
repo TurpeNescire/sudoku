@@ -12,10 +12,8 @@ class GameGrid(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self._focusRow = 0
-        self._focusCol = 0
-
         self._gameMode = GameViewMode.SOLUTION
+        self._initialFocusSet = False
 
         self._gridSize = GRID_SIZE
         self._cells: list[Cell] = []
@@ -28,16 +26,18 @@ class GameGrid(QFrame):
         self._overlay = BorderOverlay(self, self._gridSize)
         self._overlay.raise_()       # overlay draws last
 
-        QTimer.singleShot(0, self.updateGameMode)
-        # TODO: for some reason we need the above to be able to
-        # change focus with the mouse at program launch,
-        # just setting the focus like below leaves us unable
-        # to click focus cells until after switching view modes
-        # with spacebar.. why?
-        # it appears to call the focus overlay for each cell and
-        # set to false before setting true for _cells[0]
-        #QTimer.singleShot(0, self._cells[0].setFocused)
-        
+       
+
+    # just to handle program startup so logical focus is set on Cell 0,0
+    def showEvent(self, event):
+        super().showEvent(event)
+
+        if not self._initialFocusSet:
+            self._initialFocusSet = True
+            self._focusRow = 0
+            self._focusCol = 0
+            self._cells[0].setFocused(True)    
+
 
     def resizeEvent(self, event):
         super().resizeEvent(event)      # TODO: does it matter where this goes?
@@ -64,11 +64,11 @@ class GameGrid(QFrame):
                     cellSize
                 )
 
-        QTimer.singleShot(OVERLAY_UPDATE_TIMER_MS, self.updateOverlay)
-
-    
+        # TODO: why did I make this a singleShot..
+        QTimer.singleShot(OVERLAY_UPDATE_TIMER_MS, self.updateBorderOverlay)
+ 
     # after a window resize, handle resizing the border overlay also
-    def updateOverlay(self):
+    def updateBorderOverlay(self):
         gridWidth = self.width()
         gridHeight = self.height()
         size = min(gridWidth, gridHeight)
@@ -90,17 +90,12 @@ class GameGrid(QFrame):
                 return True
         elif event.type() == QEvent.Type.MouseButtonPress:
             if hasattr(obj, "row") and hasattr(obj, "col"):
-                oldIndex = self._focusRow * GRID_SIZE + self._focusCol
-                oldCell = self._cells[oldIndex]
-                oldCell.setFocused(False)
+                oldCell = self._cells[self._focusRow * GRID_SIZE + self._focusCol]
                 self._focusRow = obj.row
                 self._focusCol = obj.col
-                index = self._focusRow * GRID_SIZE + self._focusCol
-                cell = self._cells[index]
-                cell.setFocused(True)
-                if self._gameMode != GameViewMode.SOLUTION and SHOW_FOCUS_IN_HINT_MODES:
-                    cell.setFocused(True)
-                    self.updateFocusOverlay()
+                currentCell = self._cells[self._focusRow * GRID_SIZE + self._focusCol]
+                oldCell.setFocused(False)
+                currentCell.setFocused(True)
 
                 return True
 
@@ -123,9 +118,7 @@ class GameGrid(QFrame):
         ):
             row = self._focusRow
             col = self._focusCol
-            currentCell = self._cells[row * GRID_SIZE + col]
-            currentCell.setFocused(False)
-            
+            currentCell = self._cells[row * GRID_SIZE + col]            
             if SCROLL_MODE == "no v wrap":    # don't wrap at the vertical limits
                 index = row * 9 + col
                 if key == Qt.Key.Key_Return or key == Qt.Key.Key_Down:
@@ -154,21 +147,11 @@ class GameGrid(QFrame):
                     col, row = (col + 1) % 9, row
                     if col == 0:
                         row = (row + 1) % 9
-            nextIndex = row * GRID_SIZE + col
-            nextFocusCell = self._cells[nextIndex]
-            assert nextFocusCell is not None
+            nextFocusCell = self._cells[row * GRID_SIZE + col]
+            currentCell.setFocused(False)
             nextFocusCell.setFocused(True)
             self._focusRow = nextFocusCell.row
             self._focusCol = nextFocusCell.col
-
-            # TODO: pretty sure this can be removed now
-#            if self._gameMode == GameViewMode.SOLUTION:
-#                nextFocusCell.setFocus()    # set Qt keyboard focus
-#            else:
-#                if SHOW_FOCUS_IN_HINT_MODES:
-#                    self.updateFocusOverlay()
-            if SHOW_FOCUS_IN_HINT_MODES:
-                self.updateFocusOverlay()
 
             return True
         elif key == Qt.Key.Key_Space:
@@ -187,34 +170,32 @@ class GameGrid(QFrame):
        
         return False
 
-
-    # clear the focus rect on all cells, then set focus rect on current logical focus cell
-    def updateFocusOverlay(self):
-        for cell in self._cells:
-            cell.setFocused(False)
-
-        index = self._focusRow * GRID_SIZE + self._focusCol
-        if 0 <= index < len(self._cells):
-            self._cells[index].setFocused(True)
-
-
-    def updateGameMode(self, modeToSet=None):
-        # TODO: reintroduce animation switching between view modes
-#        if CELL_TRANSITION_ANIMATE and CELL_TRANSITION_ANIMATE_WAVE:
-#            self.applyModeSwitchWave(mode)
-#            return
-#
+# TODO: don't need anymore?
+#    # clear the focus rect on all cells, then set focus rect on current logical focus cell
+#    def updateFocusOverlay(self):
 #        for cell in self._cells:
-#            cell.setModeAnimated(mode) if CELL_TRANSITION_ANIMATE is True else cell.setMode(mode)
-        
+#            cell.setFocused(False)
+#
+#        index = self._focusRow * GRID_SIZE + self._focusCol
+#        if 0 <= index < len(self._cells):
+#            self._cells[index].setFocused(True)
+#
+
+    def updateGameMode(self, modeToSet=None):       
         mode = modeToSet if modeToSet is not None else self._gameMode
+
+        if CELL_TRANSITION_ANIMATE:
+            if CELL_TRANSITION_ANIMATE_WAVE:
+                self.applyModeSwitchWave(mode)
+            else:
+                for cell in self._cells:
+                    cell.setViewModeAnimated(mode)
+            return
 
         # update all cells
         for cell in self._cells:
             cell.setViewMode(mode)
-
-        self.updateFocusOverlay()
-
+       
 
     # TODO: this needs reworked when we readd animation switching between view modes
     def applyModeSwitchWave(self, targetMode: GameViewMode):
@@ -233,7 +214,8 @@ class GameGrid(QFrame):
                     effectiveMode = targetMode
 
                 if CELL_TRANSITION_ANIMATE_WAVE_FROM_FOCUS:
-                    focusWidget = self.focusWidget()
+                    #focusWidget = self.focusWidget()
+                    focusWidget = self._cells[self._focusRow * GRID_SIZE + self._focusCol]
                     if not isinstance(focusWidget, Cell):
                         focusWidget = focusWidget.parent().parent()
                     assert isinstance(focusWidget, Cell)
@@ -245,5 +227,5 @@ class GameGrid(QFrame):
                 QTimer.singleShot(
                         delay,
                         #lambda c=cell, m=effectiveMode: c.setModeAnimated(m)
-                        lambda c=cell, m=targetMode: c.setModeAnimated(m)
+                        lambda c=cell, m=targetMode: c.setViewModeAnimated(m)
                 )

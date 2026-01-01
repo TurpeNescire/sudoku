@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QGraphicsOpacityEffect
-from PySide6.QtCore import Qt, QEvent
+from PySide6.QtCore import Qt, QEvent, QPropertyAnimation, QEasingCurve
 
 from cell_edit import CellEdit
 from cell_hint import CellHint 
@@ -14,6 +14,9 @@ class Cell(QWidget):
 
         self.row = row
         self.col = col
+
+        # TODO: testing hover events
+        self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
 
         # TODO: get rid of this, since we install one on cellEdit and cellHint?
         self.installEventFilter(parent)
@@ -50,15 +53,15 @@ class Cell(QWidget):
         self._cellHintEffect.setOpacity(0.0)
 
         # TODO: animation stuff to reimplement when we add back animated view mode switching
-#        self._fadeDuration = CELL_TRANSITION_FADE_DURATION_MS
+        self._fadeDuration = CELL_TRANSITION_FADE_DURATION_MS
 
-#        self._cellEditAnim = QPropertyAnimation(self._cellEditEffect, b"opacity")
-#        self._cellEditAnim.setDuration(self._fadeDuration)
-#        self._cellEditAnim.setEasingCurve(QEasingCurve.Type.InOutQuad)
+        self._cellEditAnim = QPropertyAnimation(self._cellEditEffect, b"opacity")
+        self._cellEditAnim.setDuration(self._fadeDuration)
+        self._cellEditAnim.setEasingCurve(QEasingCurve.Type.InOutQuad)
 
-#        self._hintAnim = QPropertyAnimation(self._hintEffect, b"opacity")
-#        self._hintAnim.setDuration(self._fadeDuration)
-#        self._hintAnim.setEasingCurve(QEasingCurve.Type.InOutQuad)
+        self._cellHintAnim = QPropertyAnimation(self._cellHintEffect, b"opacity")
+        self._cellHintAnim.setDuration(self._fadeDuration)
+        self._cellHintAnim.setEasingCurve(QEasingCurve.Type.InOutQuad)
 
         # TODO: should Cell have StrongFocus?
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -80,6 +83,25 @@ class Cell(QWidget):
         super().resizeEvent(event)
 
 
+    def focusInEvent(self):
+        self.setFocused()
+
+    def focusOutEvent(self):
+        self.setFocused(False)
+
+    def setFocused(self, hasFocus=True):
+        self._cellEdit.setFocus()   # make sure Qt focus is updated when logical focus is
+        self._focusOverlay.setFocused(hasFocus)
+
+    def hoverEnterEvent(self):
+        pass
+        
+
+    # TODO: do we need this?
+    def getFocused(self):
+        return self._focusOverlay.getFocused()
+
+
     def setViewMode(self, mode: GameViewMode):
         self._gameMode = mode
 
@@ -96,45 +118,26 @@ class Cell(QWidget):
             self._cellHint.setVisible(True)
 
 
-    def focusInEvent(self):
-        self.setFocused()
+    def setViewModeAnimated(self, mode: GameViewMode):
+        if mode == GameViewMode.SOLUTION:
+            editEndValue = 1.0
+            hintEndValue = 0.0
+        else:
+            editEndValue = 0.0
+            hintEndValue = 1.0
 
-    def focusOutEvent(self):
-        self.setFocused(False)
+        self._cellEditAnim.stop()
+        self._cellHintAnim.stop()
 
-    def setFocused(self, hasFocus=True):
-        self._cellEdit.setFocus()
-        self._focusOverlay.setFocused(hasFocus)
-        
+        self._cellEditAnim.setStartValue(self._cellEditEffect.opacity())
+        self._cellEditAnim.setEndValue(editEndValue)
 
-    # TODO: do we need this?
-    def getFocused(self):
-        return self._focusOverlay.getFocused()
+        self._cellHintAnim.setStartValue(self._cellHintEffect.opacity())
+        self._cellHintAnim.setEndValue(hintEndValue)
 
+        self._cellEditAnim.start()
+        self._cellHintAnim.start()
 
-    # TODO: add back when we reintroduce animation switching between view modes
-#    def setModeAnimated(self, mode: GameViewMode):
-#        self.setMode(mode)
-#
-#        if mode == GameViewMode.SOLUTION:
-#            cellEditEndValue = 1.0
-#            hintEndValue = 0.0
-#        else:
-#            cellEditEndValue = 0.0
-#            hintEndValue = 1.0
-#
-#        self._cellEditAnim.stop()
-#        self._hintAnim.stop()
-#
-#        self._cellEditAnim.setStartValue(self._cellEditEffect.opacity())
-#        self._cellEditAnim.setEndValue(cellEditEndValue)
-#
-#        self._hintAnim.setStartValue(self._hintEffect.opacity())
-#        self._hintAnim.setEndValue(hintEndValue)
-#
-#        self._cellEditAnim.start()
-#        self._hintAnim.start()
-#
 
     def isEmpty(self):
         return False if self._cellEdit.text() else True
