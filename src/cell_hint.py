@@ -13,8 +13,32 @@ class CellHint(QWidget):
         self.row = row
         self.col = col
         self._mode = GameViewMode.HINT_GRID
-        self._hints = list(range(1,10))
+        #self._hints = list(range(1,10))
 
+        # TODO: ai slop for random hints
+        import random
+        list_type = random.choices(['all_false', 'mixed'], weights=[1, 3])[0]
+        if list_type == 'all_false':
+            self._hints = [False] * 9
+        else:
+            count = random.randint(1, 9)
+            values = [True] * count + [False] * (9 - count)
+            random.shuffle(values)
+            self._hints = values
+        #print(self._hints)
+
+        # TODO: ai slop for random digit hints
+#        import random
+#        digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+#        # Higher weight increases chance of selecting ['']
+#        list_type = random.choices(['single_empty', 'mixed'], weights=[3, 1])[0]
+#        if list_type == 'single_empty':
+#            self._hints = ['']
+#        else:
+#            length = random.randint(1, 9)
+#            self._hints = [random.choice(digits) for _ in range(length)]
+#        print(self._hints)
+        
         #self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         # TODO: while having issues with click focus not working in hint modes,
@@ -58,7 +82,7 @@ class CellHint(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        painter.fillRect(self.rect(), HINT_BACKGROUND_COLOR)
+        painter.fillRect(self.rect(), CELL_HINT_BACKGROUND_COLOR)
         
         if self._mode == GameViewMode.HINT_GRID:
             self._paintCellHints(painter)
@@ -70,10 +94,10 @@ class CellHint(QWidget):
         availableWidth = self.width()
         availableHeight = self.height()
         cellSize = min(availableWidth, availableHeight)
-        inset = cellSize * HINT_INSET_RATIO
+        inset = cellSize * CELL_HINT_INSET_RATIO
         # sanity check inset amount, it should be in pixels now
-        inset = max(HINT_INSET_MIN, inset)
-        inset = min(HINT_INSET_MAX, inset)
+        inset = max(CELL_HINT_INSET_MIN, inset)
+        inset = min(CELL_HINT_INSET_MAX, inset)
 
         newCellSize = cellSize - inset * 2
         left = (self.width() - newCellSize) / 2
@@ -85,27 +109,53 @@ class CellHint(QWidget):
         hintSize = newCellSize / 3
 
         #font = QFont("Arial", int(round(min(hintSize, hintSize) / HINT_FONT_SIZE_SCALE)))
-        font = QFont("Verdana", int(round(min(hintSize, hintSize) / HINT_FONT_SIZE_SCALE)))
+        font = QFont(CELL_HINT_FONT_FAMILY, int(round(min(hintSize, hintSize) / CELL_HINT_FONT_SIZE_SCALE)))
         painter.setFont(font)
-        painter.setPen(QColor(HINT_FONT_COLOR))
+        painter.setPen(QColor(CELL_HINT_FONT_COLOR))
 
-        for row in range(3):
-            for col in range(3):
-                index = row * 3 + col
-                hint_text = str(self._hints[index])
+        # TODO: if we're using self._hints as True/False based on index
+        for index, value in enumerate(self._hints):
+            row = index % 3
+            col = index // 3
+            hint_text = str(index + 1) if self._hints[index] else '' 
 
-                hintRect = QRectF(
-                        drawRect.left() + col * hintSize,
-                        drawRect.top() + row * hintSize,
-                        hintSize,
-                        hintSize
-                )
-                
-                painter.drawText(
+            hintRect = QRectF(
+                    drawRect.left() + col * hintSize,
+                    drawRect.top() + row * hintSize,
+                    hintSize,
+                    hintSize
+            )
+            
+            painter.drawText(
+                hintRect,
+                Qt.AlignmentFlag.AlignCenter,
+                hint_text
+            )
+
+            painter.drawText(
                     hintRect,
                     Qt.AlignmentFlag.AlignCenter,
                     hint_text
-                )
+            )       
+
+        # TODO: previous implementation
+#        for row in range(3):
+#            for col in range(3):
+#                index = row * 3 + col
+#                hint_text = str(self._hints[index])
+#
+#                hintRect = QRectF(
+#                        drawRect.left() + col * hintSize,
+#                        drawRect.top() + row * hintSize,
+#                        hintSize,
+#                        hintSize
+#                )
+#
+#                painter.drawText(
+#                    hintRect,
+#                    Qt.AlignmentFlag.AlignCenter,
+#                    hint_text
+#                )
 
 
     def _paintCompactHints(self, painter):

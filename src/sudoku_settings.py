@@ -23,17 +23,19 @@ BORDER_THIN_STYLE = Qt.PenStyle.DashLine        # SolidLine, DashLine, DotLine, 
 BORDER_THICK_STYLE = Qt.PenStyle.SolidLine
 
 CELL_EDIT_BACKGROUND_COLOR = "white"
+CELL_EDIT_FONT_FAMILY = "Verdana"
 CELL_EDIT_FONT_COLOR = "blue"
-CELL_EDIT_FONT_SCALE = 0.4
+CELL_EDIT_FONT_SCALE = 0.7
 CELL_EDIT_BORDER_SIZE = "none"
 CELL_EDIT_PADDING_SIZE = 0
 
-HINT_BACKGROUND_COLOR = Qt.GlobalColor.white      # Qt color enums or color bytes #FF00FF etc., or Qt.transparent
-HINT_FONT_SIZE_SCALE = 1.6
-HINT_FONT_COLOR = "blue"
-HINT_INSET_RATIO = 0.05   # e.g., inset by 12% of cell size
-HINT_INSET_MIN = 4        # px
-HINT_INSET_MAX = 14       # px
+CELL_HINT_BACKGROUND_COLOR = Qt.GlobalColor.white      # Qt color enums or color bytes #FF00FF etc., or Qt.transparent
+CELL_HINT_FONT_FAMILY = "Verdana"
+CELL_HINT_FONT_COLOR = "blue"
+CELL_HINT_FONT_SIZE_SCALE = 1.6
+CELL_HINT_INSET_RATIO = 0.05   # e.g., inset by 12% of cell size
+CELL_HINT_INSET_MIN = 4        # px
+CELL_HINT_INSET_MAX = 14       # px
 
 CELL_FOCUS_RECT_COLOR = "#3399FF"
 CELL_FOCUS_RECT_ALPHA = 160                # 0-255 (transparent to opaque)
@@ -44,7 +46,7 @@ CELL_FOCUS_BACKGROUND_COLOR = "lightGray"
 #CELL_FOCUS_BACKGROUND_COLOR = Qt.GlobalColor.lightGray
 CELL_FOCUS_BACKGROUND_ALPHA = 85
 
-CELL_TRANSITION_FADE_DURATION_MS = 500 #150
+CELL_TRANSITION_FADE_DURATION_MS = 150
 CELL_TRANSITION_ANIMATE = True
 CELL_TRANSITION_ANIMATE_WAVE = True
 CELL_TRANSITION_ANIMATE_WAVE_DELAY_MS = 20

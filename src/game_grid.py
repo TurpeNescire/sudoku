@@ -231,7 +231,7 @@ class GameGrid(QFrame):
                 
                 # skip hint mode for filled cells
                 # TODO: do we need this to check if the current cell is empty?
-                if targetMode == GameViewMode.HINT_GRID: #and not cell.isEmpty():
+                if targetMode == GameViewMode.HINT_GRID and not cell.isEmpty():
                     effectiveMode = GameViewMode.SOLUTION
                 else:
                     effectiveMode = targetMode
@@ -249,6 +249,6 @@ class GameGrid(QFrame):
 
                 QTimer.singleShot(
                         delay,
-                        #lambda c=cell, m=effectiveMode: c.setModeAnimated(m)
-                        lambda c=cell, m=targetMode: c.setViewModeAnimated(m)
+                        lambda c=cell, m=effectiveMode: c.setViewModeAnimated(m)
+                        #lambda c=cell, m=targetMode: c.setViewModeAnimated(m)
                 )
