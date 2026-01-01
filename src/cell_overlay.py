@@ -51,8 +51,7 @@ class CellOverlay(QWidget):
             if overlayType == CellOverlayType.FOCUS:
                 self._drawFocusRect(painter, rect)
             elif overlayType == CellOverlayType.HOVER:
-                # self._drawHover(painter, rect)
-                pass
+                self._drawHover(painter, rect)
             elif overlayType == CellOverlayType.HOVER_FOCUS:
                 #self._drawHoverFocus(painter, rect)
                 pass
@@ -60,32 +59,11 @@ class CellOverlay(QWidget):
                 # self._drawHintRect(painter, rect, digit)
                 pass
             elif overlayType == CellOverlayType.BACKGROUND:
-                # self._drawBackground(painter, rect)
-                pass
+                self._drawBackground(painter, rect)
 
             
     def _drawFocusRect(self, painter, rect):
-        bgColor = QColor(CELL_FOCUS_BACKGROUND_COLOR)
-        bgColor.setAlpha(CELL_FOCUS_BACKGROUND_ALPHA)
-        bgPen = QPen(bgColor)  # Example color
-        painter.setPen(bgPen)
-        bgBrush = QBrush(bgColor)  # Example fill color
-        painter.setBrush(bgBrush)
-
-        path = QPainterPath()
-        #rect = event.rect()
-        #rect.adjust(2, 2, -2, -2)
-        CELL_FOCUS_BACKGROUND_INSET = 0
-        rect.adjust(
-                CELL_FOCUS_BACKGROUND_INSET,
-                CELL_FOCUS_BACKGROUND_INSET,
-                -CELL_FOCUS_BACKGROUND_INSET,
-                -CELL_FOCUS_BACKGROUND_INSET
-        )
-        path.addRect(rect)
-
-        painter.fillPath(path, painter.brush())
-        painter.strokePath(path, painter.pen())
+        #self._drawBackground(painter, rect)
 
         color = QColor(CELL_FOCUS_RECT_COLOR)
         color.setAlpha(CELL_FOCUS_RECT_ALPHA)
@@ -103,4 +81,41 @@ class CellOverlay(QWidget):
         )
         #painter.drawRoundedRect(rect, 4, 4)
         painter.drawRoundedRect(rect, CELL_FOCUS_RECT_RADIUS, CELL_FOCUS_RECT_RADIUS)
+
+    def _drawHover(self, painter, rect):
+        hoverColor = QColor(200, 200, 255, 60)  # semi-transparent light blue
+        painter.fillRect(rect, hoverColor)
+
+    def _drawHoverFocus(self, painter, rect):
+        self._drawHover(painter, rect)
+        self._drawFocusRect(painter, rect)
+
+    def _drawHintRect(self, painter, rect):
+        hintColor = QColor(180, 255, 180, 80)  # semi-transparent light green
+        painter.fillRect(rect, hintColor)
+
+    def _drawBackground(self, painter, rect):
+        # bgColor = QColor(240, 240, 240)
+        # painter.fillRect(rect, bgColor)
+
+        bgColor = QColor(CELL_FOCUS_BACKGROUND_COLOR)
+        bgColor.setAlpha(CELL_FOCUS_BACKGROUND_ALPHA)
+        bgPen = QPen(bgColor)
+        painter.setPen(bgPen)
+        bgBrush = QBrush(bgColor)
+        painter.setBrush(bgBrush)
+
+        path = QPainterPath()
+        CELL_FOCUS_BACKGROUND_INSET = 0
+        rect.adjust(
+                CELL_FOCUS_BACKGROUND_INSET,
+                CELL_FOCUS_BACKGROUND_INSET,
+                -CELL_FOCUS_BACKGROUND_INSET,
+                -CELL_FOCUS_BACKGROUND_INSET
+        )
+        path.addRect(rect)
+        painter.fillPath(path, painter.brush())
+        painter.strokePath(path, painter.pen())
+        # end drawing background color
+
 

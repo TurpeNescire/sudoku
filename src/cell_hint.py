@@ -61,12 +61,12 @@ class CellHint(QWidget):
         painter.fillRect(self.rect(), HINT_BACKGROUND_COLOR)
         
         if self._mode == GameViewMode.HINT_GRID:
-            self._paintGridHints(painter)
+            self._paintCellHints(painter)
         elif self._mode == GameViewMode.HINT_COMPACT:
             self._paintCompactHints(painter)
 
     
-    def _paintGridHints(self, painter): 
+    def _paintCellHints(self, painter): 
         availableWidth = self.width()
         availableHeight = self.height()
         cellSize = min(availableWidth, availableHeight)
@@ -84,7 +84,8 @@ class CellHint(QWidget):
         drawRect = QRect(left, top, size, size)
         hintSize = newCellSize / 3
 
-        font = QFont("Arial", int(round(min(hintSize, hintSize) / HINT_FONT_SIZE_SCALE)))
+        #font = QFont("Arial", int(round(min(hintSize, hintSize) / HINT_FONT_SIZE_SCALE)))
+        font = QFont("Verdana", int(round(min(hintSize, hintSize) / HINT_FONT_SIZE_SCALE)))
         painter.setFont(font)
         painter.setPen(QColor(HINT_FONT_COLOR))
 

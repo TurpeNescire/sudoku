@@ -15,6 +15,8 @@ class Cell(QWidget):
 
         self.row = row
         self.col = col
+        self._hasFocus = False
+        self._isHovered = False
 
         # TODO: testing hover events
         self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
@@ -22,12 +24,15 @@ class Cell(QWidget):
         # TODO: get rid of this, since we install one on cellEdit and cellHint?
         self.installEventFilter(parent)
 
-
         # visible layers
-
         self._cellEdit = CellEdit(row, col, self)
         self._cellHint = CellHint(row, col, self)
         self._overlay = CellOverlay(self)
+
+        # stacking order
+        self._cellEdit.raise_()
+        self._cellHint.raise_()
+        self._overlay.raise_()
 
         # TODO: which of these are necessary and why
         # if cellEdit receives an event, parent is first
@@ -38,11 +43,6 @@ class Cell(QWidget):
         self._cellEdit.installEventFilter(self)
         self._cellHint.installEventFilter(parent)
         self._cellHint.installEventFilter(self)
-
-        # stacking order
-        self._cellEdit.raise_()
-        self._cellHint.raise_()
-        self._overlay.raise_()
 
         # overlay game mode transition effects
         self._cellEditEffect = QGraphicsOpacityEffect(self._cellEdit)
@@ -71,6 +71,10 @@ class Cell(QWidget):
         # explicitly make _cellEdit the receiver of key events?
         self.setFocusProxy(self._cellEdit)
 
+        # TODO: get rid of these I think, all mouse handling done in GameGrid event filter
+        #self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
+        #self.setMouseTracking(True)
+
         self._gameMode = GameViewMode.SOLUTION
        
 
@@ -89,13 +93,24 @@ class Cell(QWidget):
     def focusOutEvent(self):
         self.setFocused(False)
 
-    def hoverEnterEvent(self):
-        pass
-
+# TODO: remove, all mouse handling done in GameGrid event filter
+#    def hoverEnterEvent(self):
+#        print("r{self.row}c{self.col}Cell.hoverEvent()")
+#        pass
+#
+#    def mouseMoveEvent(self, event):
+#        print(f"r{self.row}c{self.col}Cell.mouseMoveEvent() at {event.position().toPoint()}")
+#
 
     def setFocused(self, hasFocus=True) -> None:
-        self._cellEdit.setFocus()   # make sure Qt focus is updated when logical focus is
-        self._overlay.setOverlayVisible(CellOverlayType.FOCUS, hasFocus)        
+        if hasFocus:    # TODO: does it matter if this runs all the time or just when hasFocus is True?
+            self._cellEdit.setFocus()   # make sure Qt focus is updated when logical focus is
+        self._overlay.setOverlayVisible(CellOverlayType.FOCUS, hasFocus)  
+        self._overlay.setOverlayVisible(CellOverlayType.BACKGROUND, hasFocus)
+
+    def setHovered(self, hovered=True) ->None:
+        self.isHovered = hovered
+        self._overlay.setOverlayVisible(CellOverlayType.HOVER, hovered)
 
     # TODO: do we need this?
     def getOverlayVisible(self, overlayType: CellOverlayType) -> bool:

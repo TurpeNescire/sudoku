@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QFrame
-from PySide6.QtCore import Qt, QTimer, QEvent
+from PySide6.QtWidgets import QFrame, QApplication
+from PySide6.QtCore import Qt, QTimer, QEvent 
 
 from cell import Cell
 from cell_hint import CellHint
@@ -14,6 +14,7 @@ class GameGrid(QFrame):
 
         self._gameMode = GameViewMode.SOLUTION
         self._initialFocusSet = False
+        self._currentHoverCell = None
 
         self._gridSize = GRID_SIZE
         self._cells: list[Cell] = []
@@ -95,9 +96,23 @@ class GameGrid(QFrame):
                 self._focusCol = obj.col
                 currentCell = self._cells[self._focusRow * GRID_SIZE + self._focusCol]
                 oldCell.setFocused(False)
+#                if self._currentHoverCell:
+#                    self._currentHoverCell.setHovered(False)
+#                    self._currentHoverCell = None
                 currentCell.setFocused(True)
 
                 return True
+        elif event.type() == QEvent.Type.HoverEnter:
+            self._currentHoverCell = obj
+            obj.setHovered(True)
+        elif event.type() == QEvent.Type.HoverLeave:
+            self._currentHoverCell = None
+            obj.setHovered(False)
+        elif event.type() == QEvent.Type.HoverMove:  # for when hover is cleared, then resumes
+            if self._currentHoverCell is None:
+                self._currentHoverCell = obj
+                obj.setHovered(True)
+
 
         return super().eventFilter(obj, event)
 
@@ -149,6 +164,9 @@ class GameGrid(QFrame):
                         row = (row + 1) % 9
             nextFocusCell = self._cells[row * GRID_SIZE + col]
             currentCell.setFocused(False)
+            if self._currentHoverCell:
+                self._currentHoverCell.setHovered(False)
+                self._currentHoverCell = None
             nextFocusCell.setFocused(True)
             self._focusRow = nextFocusCell.row
             self._focusCol = nextFocusCell.col

@@ -13,6 +13,7 @@ class CellEdit(QLineEdit):
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         #self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
         self.setFrame(False)
         self.setText(f"{self.row},{self.col}")
         self.setStyleSheet(f"""
@@ -24,19 +25,3 @@ class CellEdit(QLineEdit):
             }}
         """)
 
-#    def setFocus(self, reason=Qt.FocusReason.OtherFocusReason):
-#        print(f"{self}.setFocus called with reason {reason}")
-#        super().setFocus(reason)
-#
-#    def focusInEvent(self, event):
-#        self.parent().setFocused(True)
-#        print(f"{self}.focusInEvent called with event {event}")
-#        super().focusInEvent(event)
-#
-#
-#    def focusOutEvent(self, event):
-#        self.parent().setFocused(False)
-#        print(f"{self}.focusOutEvent called with event {event}")
-#        super().focusOutEvent(event)
-#
-#
