@@ -15,7 +15,7 @@ class Cell(QWidget):
 
         self.row = row
         self.col = col
-        self._hasFocus = False
+        self._isFocused = False
         self._isHovered = False
 
         # TODO: testing hover events
@@ -102,11 +102,15 @@ class Cell(QWidget):
 #        print(f"r{self.row}c{self.col}Cell.mouseMoveEvent() at {event.position().toPoint()}")
 #
 
-    def setFocused(self, hasFocus=True) -> None:
-        if hasFocus:    # TODO: does it matter if this runs all the time or just when hasFocus is True?
+    def setFocused(self, isFocused=True) -> None:
+        self._isFocused = isFocused
+        if isFocused:    # TODO: does it matter if this runs all the time or just when isFocused is True?
             self._cellEdit.setFocus()   # make sure Qt focus is updated when logical focus is
-        self._overlay.setOverlayVisible(CellOverlayType.FOCUS, hasFocus)  
-        self._overlay.setOverlayVisible(CellOverlayType.BACKGROUND, hasFocus)
+        self._overlay.setOverlayVisible(CellOverlayType.FOCUS, isFocused)  
+        self._overlay.setOverlayVisible(CellOverlayType.BACKGROUND, isFocused)
+
+    def getFocused(self) -> bool:
+        return self._isFocused
 
     def setHovered(self, hovered=True) ->None:
         self.isHovered = hovered

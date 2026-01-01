@@ -89,17 +89,20 @@ class GameGrid(QFrame):
         if event.type() == QEvent.Type.KeyPress:
             if self.handleKeyPress(event.key()):
                 return True
-        elif event.type() == QEvent.Type.MouseButtonPress:
+        elif event.type() == QEvent.Type.MouseButtonPress or event.type() == QEvent.Type.MouseButtonDblClick:
             if hasattr(obj, "row") and hasattr(obj, "col"):
                 oldCell = self._cells[self._focusRow * GRID_SIZE + self._focusCol]
-                self._focusRow = obj.row
-                self._focusCol = obj.col
-                currentCell = self._cells[self._focusRow * GRID_SIZE + self._focusCol]
-                oldCell.setFocused(False)
-#                if self._currentHoverCell:
-#                    self._currentHoverCell.setHovered(False)
-#                    self._currentHoverCell = None
-                currentCell.setFocused(True)
+                if isinstance(obj, CellHint):
+                    currentCell = obj.parent()
+                assert isinstance(currentCell, Cell)
+                # focus the current cell if it's a new cell, or toggle focus if it's the same cell
+                if currentCell is not oldCell:
+                    oldCell.setFocused(False)
+                    self._focusRow = obj.row
+                    self._focusCol = obj.col
+                    currentCell.setFocused(True)
+                else:
+                    currentCell.setFocused(False if currentCell.getFocused() else True)
 
                 return True
         elif event.type() == QEvent.Type.HoverEnter:
@@ -112,6 +115,8 @@ class GameGrid(QFrame):
             if self._currentHoverCell is None:
                 self._currentHoverCell = obj
                 obj.setHovered(True)
+            # TODO: handle mouse press, hold and move where hover stays after leaving the cell
+            # should this be treated as a multiple cell selection, no hovers or focus?
 
 
         return super().eventFilter(obj, event)

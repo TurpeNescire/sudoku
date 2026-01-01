@@ -13,7 +13,7 @@ class CellEdit(QLineEdit):
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         #self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
+        #self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
         self.setFrame(False)
         self.setText(f"{self.row},{self.col}")
         self.setStyleSheet(f"""
@@ -24,4 +24,12 @@ class CellEdit(QLineEdit):
                 padding: {CELL_EDIT_PADDING_SIZE}px;
             }}
         """)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+
+        font = self.font()
+        newSize = int(max(10, self.width() * CELL_EDIT_FONT_SCALE))
+        font.setPixelSize(newSize)
+        self.setFont(font)
 

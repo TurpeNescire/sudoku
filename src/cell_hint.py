@@ -15,7 +15,7 @@ class CellHint(QWidget):
         self._mode = GameViewMode.HINT_GRID
         self._hints = list(range(1,10))
 
-        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        #self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         # TODO: while having issues with click focus not working in hint modes,
         # this WA doesn't appear to matter for why CellHint mouse events are
