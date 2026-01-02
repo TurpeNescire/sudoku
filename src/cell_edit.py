@@ -14,6 +14,7 @@ class CellEdit(QLineEdit):
         self.row = row
         self.col = col
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setAttribute(Qt.WidgetAttribute.WA_MacShowFocusRect, False)
         #self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         # QIntValidator still allows stuff like 0, 001, 000004
         validator = QRegularExpressionValidator(QRegularExpression("^[1-9]$"))
@@ -21,16 +22,25 @@ class CellEdit(QLineEdit):
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         #self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
         self.setFrame(True)
+   
+        # TODO: load values from outside GUI
+        self._dummyStartValue()
+        self.resetStyleSheet()
+
+    def _dummyStartValue(self):
         #self.setText(f"{self.row},{self.col}")
         self.setText(f"{random.choice('          123456789')}")
         if self.text() == " ":
             self.setText("")
+
+    def resetStyleSheet(self):
         self.setStyleSheet(f"""
             QLineEdit {{
                 background-color: {CELL_EDIT_BACKGROUND_COLOR};
                 font-family: {CELL_EDIT_FONT_FAMILY};
                 color: {CELL_EDIT_FONT_COLOR};
                 border: {CELL_EDIT_BORDER_SIZE};
+                outline: none;
                 padding: {CELL_EDIT_PADDING_SIZE}px;
             }}
         """)

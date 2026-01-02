@@ -131,39 +131,35 @@ class GameGrid(QFrame):
 
     def handleKeyPress(self, key):
         # move the current focus highlight to the next cell
-        if (
-            key == Qt.Key.Key_Return or key == Qt.Key.Key_Up or
-            key == Qt.Key.Key_Down or key == Qt.Key.Key_Left or
-            key == Qt.Key.Key_Right or key == Qt.Key.Key_Tab
-        ):
+        if key in MOVEMENT_KEYS:
             row = self._focusRow
             col = self._focusCol
             currentCell = self._cells[row * GRID_SIZE + col]            
             if SCROLL_MODE == "no v wrap":    # don't wrap at the vertical limits
                 index = row * 9 + col
-                if key == Qt.Key.Key_Return or key == Qt.Key.Key_Down:
+                if key in MOVEMENT_DOWN_KEYS:
                     index = (index + 9) % 81
-                elif key == Qt.Key.Key_Up:
+                elif key in MOVEMENT_UP_KEYS:
                     index = (index - 9) % 81
-                elif key == Qt.Key.Key_Left:
+                elif key in MOVEMENT_LEFT_KEYS:
                     index = (index - 1) % 81
-                elif key == Qt.Key.Key_Right or key == Qt.Key.Key_Tab:
+                elif key in MOVEMENT_RIGHT_KEYS:
                     index = (index + 1) % 81
                 row, col = divmod(index, 9)
             elif SCROLL_MODE == "v wrap":      # wrap at the vertical limits
-                if key == Qt.Key.Key_Return or key == Qt.Key.Key_Down:
+                if key in MOVEMENT_DOWN_KEYS:
                     row, col = (row + 1) % 9, col
                     if row == 0:
                         col = (col + 1) % 9
-                elif key == Qt.Key.Key_Up:
+                elif key in MOVEMENT_UP_KEYS:
                     row, col = (row - 1) % 9, col
                     if row == 8:
                         col = (col - 1) % 9
-                elif key == Qt.Key.Key_Left:
+                elif key in MOVEMENT_LEFT_KEYS:
                     col, row = (col - 1) % 9, row
                     if col == 8:
                         row = (row - 1) % 9
-                elif key == Qt.Key.Key_Right or key == Qt.Key.Key_Tab:
+                elif key in MOVEMENT_RIGHT_KEYS:
                     col, row = (col + 1) % 9, row
                     if col == 0:
                         row = (row + 1) % 9
@@ -188,6 +184,10 @@ class GameGrid(QFrame):
             self.updateGameMode()
 
             return True
+        elif key in DIGIT_KEYS: 
+            currentCell = self._cells[self._focusRow * GRID_SIZE + self._focusCol]
+            if not currentCell.isSolved:
+                currentCell.setFocused(True)
         elif key == Qt.Key.Key_Escape: 
             return True
        

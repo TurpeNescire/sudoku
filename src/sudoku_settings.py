@@ -15,7 +15,8 @@ MAIN_WINDOW_HEIGHT = 500
 SHOW_FOCUS_IN_HINT_MODES = True
 SHOW_HOVER_HIGHLIGHT = True
 OVERLAY_UPDATE_TIMER_MS = 33
-SCROLL_MODE = "v wrap" # "wrap/no wrap"
+SCROLL_MODE = "no v wrap" # "wrap/no v wrap"
+#SCROLL_MODE = "v wrap" # "wrap/no v wrap"
 
 BORDER_THICK_COLOR = "black"
 BORDER_THIN_COLOR = "lightgray"
@@ -51,3 +52,27 @@ CELL_TRANSITION_ANIMATE = True
 CELL_TRANSITION_ANIMATE_WAVE = True
 CELL_TRANSITION_ANIMATE_WAVE_DELAY_MS = 20
 CELL_TRANSITION_ANIMATE_WAVE_FROM_FOCUS = True
+
+MOVEMENT_KEYS = (
+    Qt.Key.Key_Return, Qt.Key.Key_Up, Qt.Key.Key_Down,
+    Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Tab,
+    Qt.Key.Key_H, Qt.Key.Key_J, Qt.Key.Key_K, Qt.Key.Key_L,
+    Qt.Key.Key_W, Qt.Key.Key_S, Qt.Key.Key_A, Qt.Key.Key_D,
+)
+MOVEMENT_DOWN_KEYS = (
+    Qt.Key.Key_Return, Qt.Key.Key_Down, Qt.Key.Key_J, Qt.Key.Key_S,
+)
+MOVEMENT_UP_KEYS = (
+    Qt.Key.Key_Up, Qt.Key.Key_K, Qt.Key.Key_W,
+)
+MOVEMENT_LEFT_KEYS = (
+    Qt.Key.Key_Left, Qt.Key.Key_H, Qt.Key.Key_A,
+)
+MOVEMENT_RIGHT_KEYS = (
+    Qt.Key.Key_Right, Qt.Key.Key_Tab, Qt.Key.Key_L, Qt.Key.Key_D,
+)
+DIGIT_KEYS = (
+    Qt.Key.Key_1, Qt.Key.Key_2, Qt.Key.Key_3, Qt.Key.Key_4, Qt.Key.Key_5,
+    Qt.Key.Key_6, Qt.Key.Key_7, Qt.Key.Key_8, Qt.Key.Key_9
+)
+

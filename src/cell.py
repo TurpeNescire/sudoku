@@ -15,11 +15,14 @@ class Cell(QWidget):
 
         self.row = row
         self.col = col
+        self.isSolved = False
+        self.isGivenSolution = False
         self._isFocused = False
         self._isHovered = False
 
         # TODO: testing hover events
         self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_MacShowFocusRect, False)
 
         # TODO: get rid of this, since we install one on cellEdit and cellHint?
         self.installEventFilter(parent)
@@ -75,6 +78,7 @@ class Cell(QWidget):
         #self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
         #self.setMouseTracking(True)
 
+        self._setSolutionFlag()
         self._gameMode = GameViewMode.SOLUTION
        
 
@@ -102,9 +106,18 @@ class Cell(QWidget):
 #        print(f"r{self.row}c{self.col}Cell.mouseMoveEvent() at {event.position().toPoint()}")
 #
 
+    # TODO: refactor into Cell.loadSudoku() or similar
+    def _setSolutionFlag(self):
+        if self._cellEdit.text():
+            self.isSolved = True
+            self.isGivenSolution = True
+
     def setFocused(self, isFocused=True) -> None:
         self._isFocused = isFocused
-        if isFocused:    # TODO: does it matter if this runs all the time or just when isFocused is True?
+        # TODO: do I want this? clears qeditline focus after remove logical GameGrid focus
+        self._cellEdit.setReadOnly(not isFocused)
+        self._cellEdit.resetStyleSheet()    # TODO: workaround for removing MacOS focus rect after setReadOnly()
+        if isFocused and not self._cellEdit.text():    # TODO: does it matter if this runs all the time or just when isFocused is True?
             self._cellEdit.setFocus()   # make sure Qt focus is updated when logical focus is
         self._overlay.setOverlayVisible(CellOverlayType.FOCUS, isFocused)  
         self._overlay.setOverlayVisible(CellOverlayType.BACKGROUND, isFocused)
