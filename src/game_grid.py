@@ -111,19 +111,10 @@ class GameGrid(QFrame):
         elif event.type() == QEvent.Type.HoverLeave:
             uxEvent = UXEvent(None, obj, UXFlag.HOVER_LEAVE)
             self.handleUXEvent(uxEvent)
-            # TODO: refactor: remove
-#            self._currentHoverCell = None
-#            obj.setHovered(False)
             return True
         elif event.type() == QEvent.Type.HoverMove:  # for when hover is cleared, then resumes
             uxEvent = UXEvent(None, obj, UXFlag.HOVER_MOVE)
             self.handleUXEvent(uxEvent)
-#            if self._currentHoverCell is None:
-#                self._currentHoverCell = obj
-#                obj.setHovered(True)
-            # TODO: handle mouse press, hold and move where hover stays after leaving the cell
-            # should this be treated as a multiple cell selection, no hovers or focus?
-
 
         return super().eventFilter(obj, event)
 
@@ -172,7 +163,6 @@ class GameGrid(QFrame):
                         row = (row + 1) % GRID_SIZE
             nextFocusCell = self._cells[row * GRID_SIZE + col]
             flags: UXFlag = (
-#                UXFlag.HOVER_ENTER |
                 UXFlag.HOVER_LEAVE |
                 UXFlag.UNSET_LOGICAL_FOCUS |
                 UXFlag.SET_LOGICAL_FOCUS
@@ -193,7 +183,6 @@ class GameGrid(QFrame):
             return True
         elif key in DIGIT_KEYS: 
             assert self._focusCell
-            #print(f"GameGrid eventFilter key digit press: {key} on r{self._focusCell.row}c{self._focusCell.col}")
             uxEvent = UXEvent(self._hoverCell, self._focusCell, UXFlag.SET_DIGIT | UXFlag.HOVER_LEAVE, key)
             self.handleUXEvent(uxEvent)
         elif key == Qt.Key.Key_Escape: 
@@ -201,16 +190,6 @@ class GameGrid(QFrame):
        
         return False
 
-# TODO: don't need anymore?
-#    # clear the focus rect on all cells, then set focus rect on current logical focus cell
-#    def updateFocusOverlay(self):
-#        for cell in self._cells:
-#            cell.setFocused(False)
-#
-#        index = self._focusRow * GRID_SIZE + self._focusCol
-#        if 0 <= index < len(self._cells):
-#            self._cells[index].setFocused(True)
-#
 
     def updateGameMode(self, modeToSet=None):       
         mode = modeToSet if modeToSet is not None else self._gameMode
@@ -245,12 +224,6 @@ class GameGrid(QFrame):
                     effectiveMode = targetMode
 
                 if CELL_TRANSITION_ANIMATE_WAVE_FROM_FOCUS:
-                    #focusWidget = self.focusWidget()
-#                    focusWidget = self._cells[self._focusRow * GRID_SIZE + self._focusCol]
-#                    if not isinstance(focusWidget, Cell):
-#                        focusWidget = focusWidget.parent().parent()
-#                    assert isinstance(focusWidget, Cell)
-#                    focusRow, focusCol = focusWidget.row, focusWidget.col
                     assert self._focusCell
                     focusRow, focusCol = self._focusCell.row, self._focusCell.col
                     delay = (abs(row - focusRow) + abs(col - focusCol)) * baseDelay
@@ -295,8 +268,7 @@ class GameGrid(QFrame):
         if UXFlag.HOVER_LEAVE in uxEvent.flags:
             if oldCell:
                 oldCell.setHovered(False)
-                # TODO durnig keyboard logical focus change, do we set instance var to None?
-                self._hoverCell = None
+                self._hoverCell = None  # we no longer have a hover cell
             else:
                 assert cell
                 cell.setHovered(False)
@@ -305,26 +277,5 @@ class GameGrid(QFrame):
                 self._hoverCell = cell
                 cell.setHovered(True)
         if UXFlag.SET_DIGIT in uxEvent.flags:
-            #if cell.state.given == False:
             assert (cell and uxEvent.key)
-            #print(f"GameGrid.handleUXEvent() digit {uxEvent.key} set")
             cell.digitEntered(int(QKeySequence(uxEvent.key).toString()))
-            #cell.onUserEnteredValue(int(QKeySequence(uxEvent.key).toString()))
-            #cell.onTextChanged(QKeySequence(uxEvent.key).toString())
-
-            # TODO: refactor: remove
-            #print(f"GameGrid UXEvent key press digit {uxEvent.key}")
-            #            if self._currentHoverCell is None:
-#                self._currentHoverCell = obj
-#                obj.setHovered(True)
-
-# TODO: old keyboard movement focus change code
-#            currentCell.setFocused(False)
-#            if self._currentHoverCell:
-#                self._currentHoverCell.setHovered(False)
-#                self._currentHoverCell = None
-#            nextFocusCell.setFocused(True)
-#            self._focusRow = nextFocusCell.row
-#            self._focusCol = nextFocusCell.col
-#
-#
