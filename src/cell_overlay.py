@@ -9,7 +9,8 @@ from sudoku_settings import *
 class CellOverlay(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
-        self._visible = False
+        # TODO: refactor: removing this
+#        self._visible = False
         self._overlays: dict[CellOverlayType, bool] = {}
 
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
@@ -19,10 +20,11 @@ class CellOverlay(QWidget):
 
 
     # sets whether the entire overlay is visible or not
-    def setVisible(self, visible: bool):
-        self._visible = visible
-        super().setVisible(visible)
-        self.update()
+    # TODO: refactor: removing this
+#    def setVisible(self, visible: bool):
+#        self._visible = visible
+#        super().setVisible(visible)
+#        self.update()
 
     # set whether a particular type of overlay is visible or not
     def setOverlayVisible(self, overlayType: CellOverlayType, visible: bool = True) -> None:
@@ -37,8 +39,9 @@ class CellOverlay(QWidget):
 # TODO: add hover events that don't take focus
     def paintEvent(self, event):
         # TODO: can we remove this and just rely on self._overlays?
-        if not self._visible:
-            return
+        # TODO: refactor: removing this
+#        if not self._visible:
+#            return
 
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -83,7 +86,9 @@ class CellOverlay(QWidget):
         painter.drawRoundedRect(rect, CELL_FOCUS_RECT_RADIUS, CELL_FOCUS_RECT_RADIUS)
 
     def _drawHover(self, painter, rect):
-        hoverColor = QColor(200, 200, 255, 60)  # semi-transparent light blue
+        #hoverColor = QColor(200, 200, 255, 60)  # semi-transparent light blue
+        hoverColor = QColor(HOVER_BACKGROUND_COLOR) 
+        hoverColor.setAlpha(HOVER_BACKGROUND_ALPHA)
         painter.fillRect(rect, hoverColor)
 
     def _drawHoverFocus(self, painter, rect):

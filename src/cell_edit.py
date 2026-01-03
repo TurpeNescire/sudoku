@@ -22,9 +22,14 @@ class CellEdit(QLineEdit):
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         #self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
         self.setFrame(True)
-   
+ 
         # TODO: load values from outside GUI
         self._dummyStartValue()
+        self.resetStyleSheet()
+
+    # TODO: hack to overcome bug in WA_MacShowFocusRect 
+    def focusInEvent(self, event):
+        super().focusInEvent(event)
         self.resetStyleSheet()
 
     def _dummyStartValue(self):
@@ -32,6 +37,12 @@ class CellEdit(QLineEdit):
         self.setText(f"{random.choice('          123456789')}")
         if self.text() == " ":
             self.setText("")
+        else:
+            # TODO: validate
+            self.parent().state.value = self.text()
+            self.parent().state.given = True
+        self.setReadOnly(True)
+
 
     def resetStyleSheet(self):
         self.setStyleSheet(f"""

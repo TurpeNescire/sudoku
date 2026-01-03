@@ -5,6 +5,7 @@ from cell_edit import CellEdit
 from cell_hint import CellHint 
 from cell_overlay import CellOverlay
 from cell_overlay_type import CellOverlayType
+from cell_state import CellState
 from sudoku_settings import *
 from game_view_mode import GameViewMode
 
@@ -15,10 +16,12 @@ class Cell(QWidget):
 
         self.row = row
         self.col = col
-        self.isSolved = False
-        self.isGivenSolution = False
+        from ux_event import UXFlag
+        self.uxFlags: UXFlag = UXFlag.NONE
+        self.state = CellState()
+        self.isEditing = False
         self._isFocused = False
-        self._isHovered = False
+#        self._isHovered = False
 
         # TODO: testing hover events
         self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
@@ -47,6 +50,11 @@ class Cell(QWidget):
         self._cellHint.installEventFilter(parent)
         self._cellHint.installEventFilter(self)
 
+        # bind QLineEdit.textChanged Qt signal
+        # TODO: refactor: better to handle programatically from GameGrid key event filter and handleUXEvent?
+        #self._cellEdit.textChanged.connect(self._onTextChanged)
+        self._cellEdit.editingFinished.connect(self._onEditingFinished)
+
         # overlay game mode transition effects
         self._cellEditEffect = QGraphicsOpacityEffect(self._cellEdit)
         self._cellEdit.setGraphicsEffect(self._cellEditEffect)
@@ -74,11 +82,6 @@ class Cell(QWidget):
         # explicitly make _cellEdit the receiver of key events?
         self.setFocusProxy(self._cellEdit)
 
-        # TODO: get rid of these I think, all mouse handling done in GameGrid event filter
-        #self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
-        #self.setMouseTracking(True)
-
-        self._setSolutionFlag()
         self._gameMode = GameViewMode.SOLUTION
        
 
@@ -92,7 +95,7 @@ class Cell(QWidget):
         super().resizeEvent(event)
 
     def focusInEvent(self):
-        self.setFocused()
+        self.setFocused(True)
 
     def focusOutEvent(self):
         self.setFocused(False)
@@ -106,19 +109,19 @@ class Cell(QWidget):
 #        print(f"r{self.row}c{self.col}Cell.mouseMoveEvent() at {event.position().toPoint()}")
 #
 
-    # TODO: refactor into Cell.loadSudoku() or similar
-    def _setSolutionFlag(self):
-        if self._cellEdit.text():
-            self.isSolved = True
-            self.isGivenSolution = True
-
     def setFocused(self, isFocused=True) -> None:
         self._isFocused = isFocused
         # TODO: do I want this? clears qeditline focus after remove logical GameGrid focus
-        self._cellEdit.setReadOnly(not isFocused)
-        self._cellEdit.resetStyleSheet()    # TODO: workaround for removing MacOS focus rect after setReadOnly()
-        if isFocused and not self._cellEdit.text():    # TODO: does it matter if this runs all the time or just when isFocused is True?
-            self._cellEdit.setFocus()   # make sure Qt focus is updated when logical focus is
+        #self._cellEdit.setReadOnly(not isFocused)
+        #self._cellEdit.resetStyleSheet()    # TODO: workaround for removing MacOS focus rect after setReadOnly()
+        # TODO: refactor: from before self.state, remove
+        #if isFocused and not self._cellEdit.text():    # TODO: does it matter if this runs all the time or just when isFocused is True?
+#        if isFocused and not self.state.given:# TODO: does it matter if this runs all the time or just when isFocused is True?
+#            self._cellEdit.setFocus()   # make sure Qt focus is updated when logical focus is
+        if isFocused:
+            self._cellEdit.setFocus()
+#            if not self.state.given:
+#                self._cellEdit.setReadOnly(False)
         self._overlay.setOverlayVisible(CellOverlayType.FOCUS, isFocused)  
         self._overlay.setOverlayVisible(CellOverlayType.BACKGROUND, isFocused)
 
@@ -126,12 +129,24 @@ class Cell(QWidget):
         return self._isFocused
 
     def setHovered(self, hovered=True) ->None:
-        self.isHovered = hovered
+#        self._isHovered = hovered
         self._overlay.setOverlayVisible(CellOverlayType.HOVER, hovered)
 
     # TODO: do we need this?
     def getOverlayVisible(self, overlayType: CellOverlayType) -> bool:
         return self._overlay.getOverlayVisible(overlayType)
+
+    def digitEntered(self, digit: int) -> None:
+        if not self.state.given:
+            self._cellEdit.setReadOnly(False)
+            self._cellEdit.clear()
+        self.state.value = digit
+
+    def _onEditingFinished(self) -> None:
+        #print(f"r{self.row}c{self.col} Cell editing finished")
+        self._cellEdit.setReadOnly(True)
+        self._cellEdit.clearFocus()
+
 
 
     def setViewMode(self, mode: GameViewMode) -> None:
@@ -170,7 +185,5 @@ class Cell(QWidget):
         self._cellEditAnim.start()
         self._cellHintAnim.start()
 
-
     def isEmpty(self):
-        return False if self._cellEdit.text() else True
-
+        return self.state.value is None

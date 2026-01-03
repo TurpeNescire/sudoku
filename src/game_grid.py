@@ -1,6 +1,8 @@
 from PySide6.QtWidgets import QFrame, QApplication
+from PySide6.QtGui import QKeySequence
 from PySide6.QtCore import Qt, QTimer, QEvent 
 
+from ux_event import UXEvent, UXFlag
 from cell import Cell
 from cell_hint import CellHint
 from game_view_mode import GameViewMode
@@ -12,32 +14,33 @@ class GameGrid(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self._gameMode = GameViewMode.SOLUTION
-        self._initialFocusSet = False
-        self._currentHoverCell = None
-
-        self._gridSize = GRID_SIZE
-        self._cells: list[Cell] = []
+        #self._uxFlags:          UXFlag | None   = None
+        self._gameMode:         GameViewMode    = GameViewMode.SOLUTION
+        self._initialFocusSet:  bool            = False
+        self._focusCell:        Cell | None     = None
+        self._hoverCell:        Cell | None     = None
+        self._gridSize:         int             = GRID_SIZE
+        self._selectedCells:    list[Cell]      = []
+        self._cells:            list[Cell]      = []
         for cellRow in range(self._gridSize):
             for cellCol in range(self._gridSize):
                 cell = Cell(cellRow, cellCol, self)
                 self._cells.append(cell)
 
         # overlay widget to draw grid borders
-        self._overlay = BorderOverlay(self, self._gridSize)
+        self._overlay: BorderOverlay = BorderOverlay(self, self._gridSize)
         self._overlay.raise_()       # overlay draws last
 
        
-
-    # just to handle program startup so logical focus is set on Cell 0,0
+    # override to handle program startup so logical focus is set on Cell 0,0
     def showEvent(self, event):
         super().showEvent(event)
 
         if not self._initialFocusSet:
             self._initialFocusSet = True
-            self._focusRow = 0
-            self._focusCol = 0
-            self._cells[0].setFocused(True)    
+            uxCtx = UXEvent(None, self._cells[0], UXFlag.SET_LOGICAL_FOCUS)
+            self.handleUXEvent(uxCtx)
+
 
 
     def resizeEvent(self, event):
@@ -66,7 +69,9 @@ class GameGrid(QFrame):
                 )
 
         # TODO: why did I make this a singleShot..
-        QTimer.singleShot(OVERLAY_UPDATE_TIMER_MS, self.updateBorderOverlay)
+        # QTimer.singleShot(OVERLAY_UPDATE_TIMER_MS, self.updateBorderOverlay)
+        self.updateBorderOverlay()
+
  
     # after a window resize, handle resizing the border overlay also
     def updateBorderOverlay(self):
@@ -89,32 +94,33 @@ class GameGrid(QFrame):
         if event.type() == QEvent.Type.KeyPress:
             if self.handleKeyPress(event.key()):
                 return True
-        elif event.type() == QEvent.Type.MouseButtonPress or event.type() == QEvent.Type.MouseButtonDblClick:
+        elif event.type() == QEvent.Type.MouseButtonPress or event.type() == QEvent.Type.MouseButtonDblClick: 
             if hasattr(obj, "row") and hasattr(obj, "col"):
-                oldCell = self._cells[self._focusRow * GRID_SIZE + self._focusCol]
                 if isinstance(obj, CellHint):
                     currentCell = obj.parent()
+                # TODO: will the mouse press ever not be on the CellHint widget?  leave this for now to double check
                 assert isinstance(currentCell, Cell)
-                # focus the current cell if it's a new cell, or toggle focus if it's the same cell
-                if currentCell is not oldCell:
-                    oldCell.setFocused(False)
-                    self._focusRow = obj.row
-                    self._focusCol = obj.col
-                    currentCell.setFocused(True)
-                else:
-                    currentCell.setFocused(False if currentCell.getFocused() else True)
-
+                uxEvent = UXEvent(self._focusCell, currentCell, UXFlag.CELL_CLICKED)
+                self.handleUXEvent(uxEvent)
                 return True
+            return False
         elif event.type() == QEvent.Type.HoverEnter:
-            self._currentHoverCell = obj
-            obj.setHovered(True)
+            uxEvent = UXEvent(None, obj, UXFlag.HOVER_ENTER)
+            self.handleUXEvent(uxEvent)
+            return True
         elif event.type() == QEvent.Type.HoverLeave:
-            self._currentHoverCell = None
-            obj.setHovered(False)
+            uxEvent = UXEvent(None, obj, UXFlag.HOVER_LEAVE)
+            self.handleUXEvent(uxEvent)
+            # TODO: refactor: remove
+#            self._currentHoverCell = None
+#            obj.setHovered(False)
+            return True
         elif event.type() == QEvent.Type.HoverMove:  # for when hover is cleared, then resumes
-            if self._currentHoverCell is None:
-                self._currentHoverCell = obj
-                obj.setHovered(True)
+            uxEvent = UXEvent(None, obj, UXFlag.HOVER_MOVE)
+            self.handleUXEvent(uxEvent)
+#            if self._currentHoverCell is None:
+#                self._currentHoverCell = obj
+#                obj.setHovered(True)
             # TODO: handle mouse press, hold and move where hover stays after leaving the cell
             # should this be treated as a multiple cell selection, no hovers or focus?
 
@@ -132,46 +138,47 @@ class GameGrid(QFrame):
     def handleKeyPress(self, key):
         # move the current focus highlight to the next cell
         if key in MOVEMENT_KEYS:
-            row = self._focusRow
-            col = self._focusCol
-            currentCell = self._cells[row * GRID_SIZE + col]            
+            assert self._focusCell
+            row = self._focusCell.row
+            col = self._focusCell.col
             if SCROLL_MODE == "no v wrap":    # don't wrap at the vertical limits
-                index = row * 9 + col
+                index = row * GRID_SIZE + col
+                numCells = GRID_SIZE * GRID_SIZE
                 if key in MOVEMENT_DOWN_KEYS:
-                    index = (index + 9) % 81
+                    index = (index + GRID_SIZE) % numCells
                 elif key in MOVEMENT_UP_KEYS:
-                    index = (index - 9) % 81
+                    index = (index - GRID_SIZE) % numCells
                 elif key in MOVEMENT_LEFT_KEYS:
-                    index = (index - 1) % 81
+                    index = (index - 1) % numCells
                 elif key in MOVEMENT_RIGHT_KEYS:
-                    index = (index + 1) % 81
-                row, col = divmod(index, 9)
+                    index = (index + 1) % numCells
+                row, col = divmod(index, GRID_SIZE)
             elif SCROLL_MODE == "v wrap":      # wrap at the vertical limits
                 if key in MOVEMENT_DOWN_KEYS:
-                    row, col = (row + 1) % 9, col
+                    row, col = (row + 1) % GRID_SIZE, col
                     if row == 0:
-                        col = (col + 1) % 9
+                        col = (col + 1) % GRID_SIZE
                 elif key in MOVEMENT_UP_KEYS:
-                    row, col = (row - 1) % 9, col
-                    if row == 8:
-                        col = (col - 1) % 9
+                    row, col = (row - 1) % GRID_SIZE, col
+                    if row == GRID_SIZE - 1:
+                        col = (col - 1) % GRID_SIZE
                 elif key in MOVEMENT_LEFT_KEYS:
-                    col, row = (col - 1) % 9, row
-                    if col == 8:
-                        row = (row - 1) % 9
+                    col, row = (col - 1) % GRID_SIZE, row
+                    if col == GRID_SIZE - 1:
+                        row = (row - 1) % GRID_SIZE
                 elif key in MOVEMENT_RIGHT_KEYS:
-                    col, row = (col + 1) % 9, row
+                    col, row = (col + 1) % GRID_SIZE, row
                     if col == 0:
-                        row = (row + 1) % 9
+                        row = (row + 1) % GRID_SIZE
             nextFocusCell = self._cells[row * GRID_SIZE + col]
-            currentCell.setFocused(False)
-            if self._currentHoverCell:
-                self._currentHoverCell.setHovered(False)
-                self._currentHoverCell = None
-            nextFocusCell.setFocused(True)
-            self._focusRow = nextFocusCell.row
-            self._focusCol = nextFocusCell.col
-
+            flags: UXFlag = (
+#                UXFlag.HOVER_ENTER |
+                UXFlag.HOVER_LEAVE |
+                UXFlag.UNSET_LOGICAL_FOCUS |
+                UXFlag.SET_LOGICAL_FOCUS
+            )
+            uxEvent = UXEvent(self._focusCell, nextFocusCell, flags)
+            self.handleUXEvent(uxEvent)
             return True
         elif key == Qt.Key.Key_Space:
             # cycle modes
@@ -185,9 +192,10 @@ class GameGrid(QFrame):
 
             return True
         elif key in DIGIT_KEYS: 
-            currentCell = self._cells[self._focusRow * GRID_SIZE + self._focusCol]
-            if not currentCell.isSolved:
-                currentCell.setFocused(True)
+            assert self._focusCell
+            #print(f"GameGrid eventFilter key digit press: {key} on r{self._focusCell.row}c{self._focusCell.col}")
+            uxEvent = UXEvent(self._hoverCell, self._focusCell, UXFlag.SET_DIGIT | UXFlag.HOVER_LEAVE, key)
+            self.handleUXEvent(uxEvent)
         elif key == Qt.Key.Key_Escape: 
             return True
        
@@ -238,11 +246,13 @@ class GameGrid(QFrame):
 
                 if CELL_TRANSITION_ANIMATE_WAVE_FROM_FOCUS:
                     #focusWidget = self.focusWidget()
-                    focusWidget = self._cells[self._focusRow * GRID_SIZE + self._focusCol]
-                    if not isinstance(focusWidget, Cell):
-                        focusWidget = focusWidget.parent().parent()
-                    assert isinstance(focusWidget, Cell)
-                    focusRow, focusCol = focusWidget.row, focusWidget.col
+#                    focusWidget = self._cells[self._focusRow * GRID_SIZE + self._focusCol]
+#                    if not isinstance(focusWidget, Cell):
+#                        focusWidget = focusWidget.parent().parent()
+#                    assert isinstance(focusWidget, Cell)
+#                    focusRow, focusCol = focusWidget.row, focusWidget.col
+                    assert self._focusCell
+                    focusRow, focusCol = self._focusCell.row, self._focusCell.col
                     delay = (abs(row - focusRow) + abs(col - focusCol)) * baseDelay
                 else:
                     delay = (row + col) * baseDelay
@@ -252,3 +262,69 @@ class GameGrid(QFrame):
                         lambda c=cell, m=effectiveMode: c.setViewModeAnimated(m)
                         #lambda c=cell, m=targetMode: c.setViewModeAnimated(m)
                 )
+
+
+    def handleUXEvent(self, uxEvent: UXEvent) -> None:
+        oldCell = uxEvent.oldCell if isinstance(uxEvent.oldCell, Cell) else None
+        cell = uxEvent.cell if isinstance(uxEvent.cell, Cell) else None
+
+        if UXFlag.SET_LOGICAL_FOCUS in uxEvent.flags:
+            assert cell
+            cell.setFocused(True)    
+            self._focusCell = cell
+        if UXFlag.UNSET_LOGICAL_FOCUS in uxEvent.flags:
+            if oldCell:
+                oldCell.setFocused(False)
+            else:
+                assert cell
+                cell.setFocused(False)
+        if UXFlag.CELL_CLICKED in uxEvent.flags:
+            assert cell
+            # focus the current cell if it's a new cell, or toggle focus if it's the same cell
+            if cell is not oldCell:
+                assert oldCell
+                oldCell.setFocused(False)
+                self._focusCell = cell
+                cell.setFocused(True)
+            else:
+                cell.setFocused(False if cell.getFocused() else True)
+        if UXFlag.HOVER_ENTER in uxEvent.flags:
+            assert cell
+            self._hoverCell = cell
+            cell.setHovered(True)
+        if UXFlag.HOVER_LEAVE in uxEvent.flags:
+            if oldCell:
+                oldCell.setHovered(False)
+                # TODO durnig keyboard logical focus change, do we set instance var to None?
+                self._hoverCell = None
+            else:
+                assert cell
+                cell.setHovered(False)
+        if UXFlag.HOVER_MOVE in uxEvent.flags:
+            if self._hoverCell is None and cell:
+                self._hoverCell = cell
+                cell.setHovered(True)
+        if UXFlag.SET_DIGIT in uxEvent.flags:
+            #if cell.state.given == False:
+            assert (cell and uxEvent.key)
+            #print(f"GameGrid.handleUXEvent() digit {uxEvent.key} set")
+            cell.digitEntered(int(QKeySequence(uxEvent.key).toString()))
+            #cell.onUserEnteredValue(int(QKeySequence(uxEvent.key).toString()))
+            #cell.onTextChanged(QKeySequence(uxEvent.key).toString())
+
+            # TODO: refactor: remove
+            #print(f"GameGrid UXEvent key press digit {uxEvent.key}")
+            #            if self._currentHoverCell is None:
+#                self._currentHoverCell = obj
+#                obj.setHovered(True)
+
+# TODO: old keyboard movement focus change code
+#            currentCell.setFocused(False)
+#            if self._currentHoverCell:
+#                self._currentHoverCell.setHovered(False)
+#                self._currentHoverCell = None
+#            nextFocusCell.setFocused(True)
+#            self._focusRow = nextFocusCell.row
+#            self._focusCol = nextFocusCell.col
+#
+#
