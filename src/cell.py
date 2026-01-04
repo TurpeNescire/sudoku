@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QWidget, QGraphicsOpacityEffect
-from PySide6.QtCore import Qt, QEvent, QPropertyAnimation, QEasingCurve
+from PySide6.QtWidgets import QWidget, QGraphicsOpacityEffect 
+from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer
 
 from cell_edit import CellEdit
 from cell_hint import CellHint 
@@ -19,6 +19,7 @@ class Cell(QWidget):
 #        from ux_event import UXFlag
 #        self.uxFlags: UXFlag = UXFlag.NONE
         self.state = CellState()
+        self._gameViewMode = GameViewMode.SOLUTION
         self.isEditing = False
         self._isFocused = False
 
@@ -81,8 +82,9 @@ class Cell(QWidget):
         # explicitly make _cellEdit the receiver of key events?
         self.setFocusProxy(self._cellEdit)
 
-        self._gameMode = GameViewMode.SOLUTION
-       
+#        if not self.state.given:
+#            self.setViewMode(GameViewMode.HINT_GRID)
+ 
 
     def resizeEvent(self, event):
         rect = self.rect()
@@ -127,7 +129,7 @@ class Cell(QWidget):
         if not self.state.given:
             self._cellEdit.setReadOnly(False)
             self._cellEdit.clear()
-        if self._gameMode == GameViewMode.HINT_GRID:
+        if self._gameViewMode == GameViewMode.HINT_GRID:
             if CELL_TRANSITION_ANIMATE:
                 self.setViewModeAnimated(GameViewMode.SOLUTION)
             else:
@@ -138,7 +140,8 @@ class Cell(QWidget):
         if not self.state.given:
 #            self._cellEdit.setReadOnly(False)
             self._cellEdit.clear()
-        self.state.value = None
+            self._cellEdit.setReadOnly(False)
+            self.state.value = None
 
     def _onEditingFinished(self) -> None:
         self._cellEdit.setReadOnly(True)
@@ -147,28 +150,41 @@ class Cell(QWidget):
 
 
     def setViewMode(self, mode: GameViewMode) -> None:
-        self._gameMode = mode
+        self._gameViewMode = mode
 
+        #if mode == GameViewMode.SOLUTION or self.state.value == None:
         if mode == GameViewMode.SOLUTION:
             self._cellEditEffect.setOpacity(1.0)
-            self._cellEdit.setVisible(True)
             self._cellHintEffect.setOpacity(0.0)
-            self._cellHint.setVisible(False)
+#            self._cellEdit.setVisible(True)
+#            QTimer.singleShot(CELL_TRANSITION_FADE_DURATION_MS, lambda: self._cellHint.setVisible(False))
         elif mode in (GameViewMode.HINT_GRID, GameViewMode.HINT_COMPACT):
-            self._cellHint.setMode(mode)
+# TODO: remove?
+#            self._cellHint.setMode(mode)
             self._cellEditEffect.setOpacity(0.0)
-            self._cellEdit.setVisible(False)
             self._cellHintEffect.setOpacity(1.0)
-            self._cellHint.setVisible(True)
+#            self._cellHint.setVisible(True)
+#            QTimer.singleShot(CELL_TRANSITION_FADE_DURATION_MS, lambda: self._cellEdit.setVisible(False))
 
 
     def setViewModeAnimated(self, mode: GameViewMode):
-        self._gameMode = mode
+        #print(f"r{self.row}c{self.col} setViewModeAnimated {mode}")
+        self._gameViewMode = mode
 
         if mode == GameViewMode.SOLUTION:
+            #if self.state.value:
+                #print(f"r{self.row}c{self.col}.setViewModeAnimated mode=\"{mode}\" value={self.state.value}")
+        #if mode == GameViewMode.SOLUTION or self.state.value is None:
+            self._cellEdit.setVisible(True)
+            QTimer.singleShot(CELL_TRANSITION_FADE_DURATION_MS, lambda: self._cellHint.setVisible(False))
             editEndValue = 1.0
             hintEndValue = 0.0
-        else:
+        elif self.state.value is None:
+            #print(f"r{self.row}c{self.col}.setViewModeAnimated mode=\"{mode}\" value={self.state.value}")
+            self.clearCell()
+        #else:
+            self._cellHint.setVisible(True)
+            QTimer.singleShot(CELL_TRANSITION_FADE_DURATION_MS, lambda: self._cellEdit.setVisible(False))
             editEndValue = 0.0
             hintEndValue = 1.0
 

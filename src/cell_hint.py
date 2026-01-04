@@ -53,9 +53,9 @@ class CellHint(QWidget):
         #self.setAutoFillBackground(False)
 
 
-    def setMode(self, mode: GameViewMode):
-        self._mode = mode
-        self.update()
+#    def setMode(self, mode: GameViewMode):
+#        self._mode = mode
+#        self.update()
 
     def setHints(self, hints):
         self._hints = hints
@@ -137,25 +137,6 @@ class CellHint(QWidget):
                     Qt.AlignmentFlag.AlignCenter,
                     hint_text
             )       
-
-        # TODO: previous implementation
-#        for row in range(3):
-#            for col in range(3):
-#                index = row * 3 + col
-#                hint_text = str(self._hints[index])
-#
-#                hintRect = QRectF(
-#                        drawRect.left() + col * hintSize,
-#                        drawRect.top() + row * hintSize,
-#                        hintSize,
-#                        hintSize
-#                )
-#
-#                painter.drawText(
-#                    hintRect,
-#                    Qt.AlignmentFlag.AlignCenter,
-#                    hint_text
-#                )
 
 
     def _paintCompactHints(self, painter):

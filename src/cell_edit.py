@@ -41,7 +41,7 @@ class CellEdit(QLineEdit):
             # TODO: validate
             self.parent().state.value = self.text()
             self.parent().state.given = True
-        self.setReadOnly(True)
+            self.setReadOnly(True)
 
 
     def resetStyleSheet(self):

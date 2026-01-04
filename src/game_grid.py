@@ -266,7 +266,7 @@ class GameGrid(QFrame):
             cell.digitEntered(int(QKeySequence(uxEvent.key).toString()))
         if UXFlag.CLEAR_CELL in uxEvent.flags:
             assert cell
-            print(f"GameGrid.handleUXEvent() CLEAR_CELL on r{cell.row}c{cell.col}")
+            #print(f"GameGrid.handleUXEvent() CLEAR_CELL on r{cell.row}c{cell.col}")
             cell.clearCell()
 
 
@@ -288,6 +288,7 @@ class GameGrid(QFrame):
 
     # TODO: this needs reworked when we readd animation switching between view modes
     def applyModeSwitchWave(self, targetMode: GameViewMode):
+        #print("GameGrid applyModeSwitchWave()")
         assert CELL_TRANSITION_ANIMATE_WAVE is True
         baseDelay = CELL_TRANSITION_ANIMATE_WAVE_DELAY_MS 
 
