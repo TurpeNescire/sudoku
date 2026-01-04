@@ -34,6 +34,7 @@ class UXFlag(IntFlag):
 
     # digit solution press
     SET_DIGIT = auto()
+    CLEAR_CELL = auto()
 
     # logical focus
     HAS_LOGICAL_FOCUS = auto()

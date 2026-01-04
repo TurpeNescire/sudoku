@@ -93,6 +93,7 @@ class Cell(QWidget):
 
         super().resizeEvent(event)
 
+# TODO: can we get rid of these now?
     def focusInEvent(self):
         self.setFocused(True)
 
@@ -103,14 +104,20 @@ class Cell(QWidget):
         self._isFocused = isFocused
         if isFocused:
             self._cellEdit.setFocus()
+#        self.setHovered(not isFocused)
         self._overlay.setOverlayVisible(CellOverlayType.FOCUS, isFocused)  
         self._overlay.setOverlayVisible(CellOverlayType.BACKGROUND, isFocused)
 
-    def getFocused(self) -> bool:
+    def isFocused(self) -> bool:
         return self._isFocused
 
     def setHovered(self, hovered=True) ->None:
         self._overlay.setOverlayVisible(CellOverlayType.HOVER, hovered)
+# TODO: remove
+#        self._isHovered = hovered
+#
+#    def isHovered(self):
+#        return self._isHovered
 
     # TODO: do we need this?
     def getOverlayVisible(self, overlayType: CellOverlayType) -> bool:
@@ -126,6 +133,12 @@ class Cell(QWidget):
             else:
                 self.setViewMode(GameViewMode.SOLUTION)
         self.state.value = digit
+
+    def clearCell(self):
+        if not self.state.given:
+#            self._cellEdit.setReadOnly(False)
+            self._cellEdit.clear()
+        self.state.value = None
 
     def _onEditingFinished(self) -> None:
         self._cellEdit.setReadOnly(True)

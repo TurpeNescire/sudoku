@@ -14,11 +14,12 @@ class GameGrid(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        #self._uxFlags:          UXFlag | None   = None
+        #self._uxFlags:         UXFlag | None   = None
         self._gameMode:         GameViewMode    = GameViewMode.SOLUTION
         self._initialFocusSet:  bool            = False
         self._focusCell:        Cell | None     = None
-        self._hoverCell:        Cell | None     = None
+        self._oldFocusCell:     Cell | None     = None
+        self._hoverCells:       list[Cell]      = []
         self._gridSize:         int             = GRID_SIZE
         self._selectedCells:    list[Cell]      = []
         self._cells:            list[Cell]      = []
@@ -83,7 +84,12 @@ class GameGrid(QFrame):
         x_offset = (gridWidth - cellSize * self._gridSize) // 2
         y_offset = (gridHeight - cellSize * self._gridSize) // 2
 
-        self._overlay.setGeometry(x_offset, y_offset, cellSize * self._gridSize, cellSize * self._gridSize)
+        self._overlay.setGeometry(
+                x_offset,
+                y_offset,
+                cellSize * self._gridSize,
+                cellSize * self._gridSize
+        )
         self._overlay.raise_()  # Optional: ensure stacking order if needed
 
 
@@ -94,13 +100,16 @@ class GameGrid(QFrame):
         if event.type() == QEvent.Type.KeyPress:
             if self.handleKeyPress(event.key()):
                 return True
-        elif event.type() == QEvent.Type.MouseButtonPress or event.type() == QEvent.Type.MouseButtonDblClick: 
+        elif (
+                event.type() == QEvent.Type.MouseButtonPress or
+                event.type() == QEvent.Type.MouseButtonDblClick
+        ):
             if hasattr(obj, "row") and hasattr(obj, "col"):
                 if isinstance(obj, CellHint):
                     currentCell = obj.parent()
                 # TODO: will the mouse press ever not be on the CellHint widget?  leave this for now to double check
                 assert isinstance(currentCell, Cell)
-                uxEvent = UXEvent(self._focusCell, currentCell, UXFlag.CELL_CLICKED)
+                uxEvent = UXEvent(self._focusCell, currentCell, UXFlag.CELL_CLICKED | UXFlag.HOVER_LEAVE)
                 self.handleUXEvent(uxEvent)
                 return True
             return False
@@ -169,6 +178,7 @@ class GameGrid(QFrame):
             )
             uxEvent = UXEvent(self._focusCell, nextFocusCell, flags)
             self.handleUXEvent(uxEvent)
+
             return True
         elif key == Qt.Key.Key_Space:
             # cycle modes
@@ -183,12 +193,81 @@ class GameGrid(QFrame):
             return True
         elif key in DIGIT_KEYS: 
             assert self._focusCell
-            uxEvent = UXEvent(self._hoverCell, self._focusCell, UXFlag.SET_DIGIT | UXFlag.HOVER_LEAVE, key)
+            #print(f"GameGrid digit key pressed on Cell r{self._focusCell.row}c{self._focusCell.col}")
+            digitFlags = (UXFlag.SET_DIGIT | UXFlag.HOVER_LEAVE)
+            uxEvent = UXEvent(self._oldFocusCell, self._focusCell, digitFlags, key)
             self.handleUXEvent(uxEvent)
+            # don't return True, we want to handle this both programatically in
+            # handleUXEvent, and let handleKeyPress() send the event on to
+            # the CellEdit in the event chain - to think about, will this
+            # ever cause an issue where CellEdit gets a digit press event
+            # before we've handled the CellEdit state through handleUXEvent()?
+            return False
+        elif key in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
+            assert self._focusCell
+            #print(f"GameGrid delete pressed on Cell r{self._focusCell.row}c{self._focusCell.col}")
+            deleteFlags = (UXFlag.CLEAR_CELL | UXFlag.HOVER_LEAVE)
+            uxEvent = UXEvent(self._oldFocusCell, self._focusCell, deleteFlags)
+            self.handleUXEvent(uxEvent)
+            return True
         elif key == Qt.Key.Key_Escape: 
             return True
        
         return False
+
+
+    def handleUXEvent(self, uxEvent: UXEvent) -> None:
+        oldCell = uxEvent.oldCell if isinstance(uxEvent.oldCell, Cell) else None
+        cell = uxEvent.cell if isinstance(uxEvent.cell, Cell) else None
+
+        if UXFlag.SET_LOGICAL_FOCUS in uxEvent.flags:
+            assert cell
+            cell.setFocused(True)    
+            self._focusCell = cell
+
+        if UXFlag.UNSET_LOGICAL_FOCUS in uxEvent.flags:
+            if oldCell:
+                oldCell.setFocused(False)
+            else:
+                assert cell
+                cell.setFocused(False)
+
+        if UXFlag.CELL_CLICKED in uxEvent.flags:
+            assert cell
+            # focus the current cell if it's a new cell
+            if cell is not oldCell:
+                assert oldCell
+                oldCell.setFocused(False)
+                self._focusCell = cell
+                cell.setFocused(True) 
+            else:   # toggle focus on the same cell
+                # TODO: remove, too cute
+                cell.setFocused(False if cell.isFocused() else True)
+#                if cell.isFocused():
+#                    cell.setFocused(True)
+#                else:
+#                    cell.setFocused(False)
+
+        if UXFlag.HOVER_ENTER in uxEvent.flags:
+            assert cell
+            self._hoverCells.append(cell)
+            cell.setHovered(True)
+        if UXFlag.HOVER_LEAVE in uxEvent.flags:
+            while len(self._hoverCells) > 0:
+                hoverCell = self._hoverCells.pop()
+                hoverCell.setHovered(False)
+        if UXFlag.HOVER_MOVE in uxEvent.flags:
+            if len(self._hoverCells) > 0 and cell:
+                self._hoverCells.append(cell)
+                cell.setHovered(True)
+
+        if UXFlag.SET_DIGIT in uxEvent.flags:
+            assert (cell and uxEvent.key)
+            cell.digitEntered(int(QKeySequence(uxEvent.key).toString()))
+        if UXFlag.CLEAR_CELL in uxEvent.flags:
+            assert cell
+            print(f"GameGrid.handleUXEvent() CLEAR_CELL on r{cell.row}c{cell.col}")
+            cell.clearCell()
 
 
     def updateGameMode(self, modeToSet=None):       
@@ -237,45 +316,3 @@ class GameGrid(QFrame):
                 )
 
 
-    def handleUXEvent(self, uxEvent: UXEvent) -> None:
-        oldCell = uxEvent.oldCell if isinstance(uxEvent.oldCell, Cell) else None
-        cell = uxEvent.cell if isinstance(uxEvent.cell, Cell) else None
-
-        if UXFlag.SET_LOGICAL_FOCUS in uxEvent.flags:
-            assert cell
-            cell.setFocused(True)    
-            self._focusCell = cell
-        if UXFlag.UNSET_LOGICAL_FOCUS in uxEvent.flags:
-            if oldCell:
-                oldCell.setFocused(False)
-            else:
-                assert cell
-                cell.setFocused(False)
-        if UXFlag.CELL_CLICKED in uxEvent.flags:
-            assert cell
-            # focus the current cell if it's a new cell, or toggle focus if it's the same cell
-            if cell is not oldCell:
-                assert oldCell
-                oldCell.setFocused(False)
-                self._focusCell = cell
-                cell.setFocused(True)
-            else:
-                cell.setFocused(False if cell.getFocused() else True)
-        if UXFlag.HOVER_ENTER in uxEvent.flags:
-            assert cell
-            self._hoverCell = cell
-            cell.setHovered(True)
-        if UXFlag.HOVER_LEAVE in uxEvent.flags:
-            if oldCell:
-                oldCell.setHovered(False)
-                self._hoverCell = None  # we no longer have a hover cell
-            else:
-                assert cell
-                cell.setHovered(False)
-        if UXFlag.HOVER_MOVE in uxEvent.flags:
-            if self._hoverCell is None and cell:
-                self._hoverCell = cell
-                cell.setHovered(True)
-        if UXFlag.SET_DIGIT in uxEvent.flags:
-            assert (cell and uxEvent.key)
-            cell.digitEntered(int(QKeySequence(uxEvent.key).toString()))
